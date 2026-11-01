@@ -282,16 +282,18 @@ class _LocationsScreenState extends ConsumerState<LocationsScreen> {
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
-      child: Container(
-        decoration: BoxDecoration(
-          color: theme.secondaryColor,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: theme.borderColor, width: 1),
-        ),
-        clipBehavior: Clip.antiAlias,
-        child: Theme(
-          data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
-          child: ExpansionTile(
+      child: Material(
+        color: theme.secondaryColor,
+        borderRadius: BorderRadius.circular(16),
+        child: Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: theme.borderColor, width: 1),
+          ),
+          clipBehavior: Clip.antiAlias,
+          child: Theme(
+            data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+            child: ExpansionTile(
             initiallyExpanded: true,
             tilePadding: EdgeInsets.only(
               left: theme.isRtl ? 12 : 12.0 + (depth * 16),
@@ -371,7 +373,8 @@ class _LocationsScreenState extends ConsumerState<LocationsScreen> {
           ),
         ),
       ),
-    );
+    ),
+  );
   }
 }
 
@@ -430,12 +433,16 @@ class _LocationTreeTile extends ConsumerWidget {
                       children: [
                         Row(
                           children: [
-                            Text(
-                              location.name,
-                              style: theme.textStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.bold,
-                                color: theme.textColor,
+                            Flexible(
+                              child: Text(
+                                location.name,
+                                style: theme.textStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.bold,
+                                  color: theme.textColor,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
                               ),
                             ),
                             if (location.code != null) ...[

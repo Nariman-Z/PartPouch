@@ -140,7 +140,7 @@ class DashboardScreen extends ConsumerWidget {
                               color: theme.subTextColor,
                               size: 20,
                             ),
-                            onTap: () => context.push('/inventory'),
+                            onTap: () => context.go('/inventory'),
                             theme: theme,
                           ),
 
@@ -155,7 +155,7 @@ class DashboardScreen extends ConsumerWidget {
                               color: theme.subTextColor,
                               size: 20,
                             ),
-                            onTap: () => context.push('/inventory'),
+                            onTap: () => context.go('/inventory'),
                             theme: theme,
                           ),
 

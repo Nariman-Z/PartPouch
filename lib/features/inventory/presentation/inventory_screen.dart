@@ -300,6 +300,7 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
           floatingActionButton: Padding(
             padding: const EdgeInsets.only(bottom: 84),
             child: FloatingActionButton(
+              heroTag: 'inventory_fab',
               backgroundColor: theme.activeColor,
               foregroundColor: Colors.white,
               elevation: 4,

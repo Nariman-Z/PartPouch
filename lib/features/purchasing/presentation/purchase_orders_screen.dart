@@ -113,6 +113,7 @@ class _PurchaseOrdersScreenState extends ConsumerState<PurchaseOrdersScreen> {
             ],
           ),
           floatingActionButton: FloatingActionButton(
+            heroTag: 'purchase_orders_fab',
             backgroundColor: theme.activeColor,
             foregroundColor: Colors.white,
             tooltip: theme.translate('create_po'),

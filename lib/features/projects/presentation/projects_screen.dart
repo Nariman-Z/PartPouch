@@ -171,6 +171,7 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
           floatingActionButton: Padding(
             padding: const EdgeInsets.only(bottom: 84),
             child: FloatingActionButton(
+              heroTag: 'projects_fab',
               backgroundColor: theme.activeColor,
               foregroundColor: Colors.white,
               elevation: 4,

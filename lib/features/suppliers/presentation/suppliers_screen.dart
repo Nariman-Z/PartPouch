@@ -157,6 +157,7 @@ class _SuppliersScreenState extends ConsumerState<SuppliersScreen> {
             ],
           ),
           floatingActionButton: FloatingActionButton(
+            heroTag: 'suppliers_fab',
             backgroundColor: theme.activeColor,
             foregroundColor: Colors.white,
             tooltip: theme.translate('add_supplier'),

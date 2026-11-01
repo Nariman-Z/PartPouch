@@ -173,4 +173,62 @@ void main() {
     await tester.pumpWidget(const SizedBox());
     await tester.pumpAndSettle();
   });
+
+  testWidgets('Pop-up dialogs display Add and Cancel buttons correctly', (
+    WidgetTester tester,
+  ) async {
+    final repo = AppSettingsRepository(db);
+    await repo.setOnboardingCompleted(true);
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [databaseProvider.overrideWithValue(db)],
+        child: const PartPouchApp(),
+      ),
+    );
+
+    // Transition past splash
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 1600));
+    await tester.pumpAndSettle();
+
+    // Navigate to Locations tab
+    await tester.tap(find.text('Locations'));
+    await tester.pumpAndSettle();
+
+    // Open Add Location dialog
+    await tester.tap(find.byIcon(Icons.add_rounded));
+    await tester.pumpAndSettle();
+
+    // Verify dialog title and buttons
+    expect(find.text('New Storage Location'), findsOneWidget);
+    expect(find.text('Cancel'), findsOneWidget);
+    expect(find.text('Add'), findsOneWidget);
+
+    // Close dialog
+    await tester.tap(find.text('Cancel'));
+    await tester.pumpAndSettle();
+
+    // Navigate to Projects tab
+    await tester.tap(find.text('Projects'));
+    await tester.pumpAndSettle();
+
+    // Open Add Project dialog
+    await tester.tap(find.byIcon(Icons.add_rounded));
+    await tester.pumpAndSettle();
+
+    // Verify dialog title and buttons
+    expect(find.text('Create Project'), findsOneWidget);
+    expect(find.text('Cancel'), findsOneWidget);
+    expect(find.text('Add'), findsOneWidget);
+
+    // Close dialog
+    await tester.tap(find.text('Cancel'));
+    await tester.pumpAndSettle();
+
+    // Unmount widget tree
+    await tester.pumpWidget(const SizedBox());
+    await tester.pumpAndSettle();
+  });
 }
+

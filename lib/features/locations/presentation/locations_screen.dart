@@ -245,6 +245,7 @@ class _LocationsScreenState extends ConsumerState<LocationsScreen> {
           floatingActionButton: Padding(
             padding: const EdgeInsets.only(bottom: 84),
             child: FloatingActionButton(
+              heroTag: 'locations_fab',
               backgroundColor: theme.activeColor,
               foregroundColor: Colors.white,
               elevation: 4,

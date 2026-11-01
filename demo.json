@@ -1,0 +1,604 @@
+{
+  "app": "PartPouch",
+  "version": 1,
+  "exportedAt": "2026-11-01T08:00:00.000Z",
+  "components": [
+    {
+      "id": "c-esp32-c3-001",
+      "name": "ESP32-C3 Dev Board",
+      "category": "Microcontroller",
+      "manufacturer": "Espressif Systems",
+      "manufacturerPartNumber": "ESP32-C3-WROOM-02",
+      "internalSku": "MCU-ESP32C3-DEV",
+      "description": "RISC-V single-core microcontroller with 2.4 GHz Wi-Fi and Bluetooth 5 LE",
+      "packageFootprint": "Module 18x20mm",
+      "datasheetUrl": "https://www.espressif.com/sites/default/files/documentation/esp32-c3_datasheet_en.pdf",
+      "tags": "mcu,wifi,ble,iot,riscv",
+      "minStockThreshold": 5,
+      "targetStockQuantity": 20,
+      "defaultSupplierId": "sup-mouser-001",
+      "unitOfMeasure": "pcs",
+      "unitCostCents": 420,
+      "createdAt": "2026-10-01T10:00:00.000Z",
+      "updatedAt": "2026-10-25T14:30:00.000Z",
+      "archivedAt": null
+    },
+    {
+      "id": "c-res-10k-0805",
+      "name": "10kΩ Resistor 1%",
+      "category": "Resistors",
+      "manufacturer": "Yageo",
+      "manufacturerPartNumber": "RC0805FR-0710KL",
+      "internalSku": "RES-10K-0805",
+      "description": "Thick film chip resistor, 10 kOhms, 125 mW, 1% tolerance",
+      "packageFootprint": "0805 SMD",
+      "datasheetUrl": "https://www.yageo.com/en/Product/Download/Product/RC0805FR-0710KL",
+      "tags": "passive,smd,resistor,pullup",
+      "minStockThreshold": 50,
+      "targetStockQuantity": 500,
+      "defaultSupplierId": "sup-lcsc-003",
+      "unitOfMeasure": "pcs",
+      "unitCostCents": 2,
+      "createdAt": "2026-09-15T09:00:00.000Z",
+      "updatedAt": "2026-10-20T11:00:00.000Z",
+      "archivedAt": null
+    },
+    {
+      "id": "c-cap-100u-25v",
+      "name": "100µF Capacitor 25V",
+      "category": "Capacitors",
+      "manufacturer": "Nichicon",
+      "manufacturerPartNumber": "UVR1E101MDD",
+      "internalSku": "CAP-100U-25V",
+      "description": "Aluminum electrolytic capacitor, 100 µF, 25 V, 20% tolerance, radial leads",
+      "packageFootprint": "Radial 6.3x11mm",
+      "datasheetUrl": "https://www.nichicon.co.jp/english/products/pdfs/e-uvr.pdf",
+      "tags": "passive,electrolytic,capacitor,filter",
+      "minStockThreshold": 20,
+      "targetStockQuantity": 100,
+      "defaultSupplierId": "sup-digikey-002",
+      "unitOfMeasure": "pcs",
+      "unitCostCents": 18,
+      "createdAt": "2026-09-20T12:00:00.000Z",
+      "updatedAt": "2026-10-18T16:20:00.000Z",
+      "archivedAt": null
+    },
+    {
+      "id": "c-diode-1n4007",
+      "name": "1N4007 Rectifier Diode",
+      "category": "Diodes",
+      "manufacturer": "Vishay",
+      "manufacturerPartNumber": "1N4007-E3/54",
+      "internalSku": "DIO-1N4007-DO41",
+      "description": "Standard recovery rectifier diode, 1000 V, 1 A, DO-41 package",
+      "packageFootprint": "DO-41 Through-Hole",
+      "datasheetUrl": "https://www.vishay.com/docs/88503/1n4001.pdf",
+      "tags": "diode,rectifier,protection",
+      "minStockThreshold": 25,
+      "targetStockQuantity": 150,
+      "defaultSupplierId": "sup-mouser-001",
+      "unitOfMeasure": "pcs",
+      "unitCostCents": 8,
+      "createdAt": "2026-09-10T08:30:00.000Z",
+      "updatedAt": "2026-10-15T09:45:00.000Z",
+      "archivedAt": null
+    },
+    {
+      "id": "c-dht22-sensor",
+      "name": "DHT22 Temperature & Humidity Sensor",
+      "category": "Sensors",
+      "manufacturer": "Aosong",
+      "manufacturerPartNumber": "AM2302",
+      "internalSku": "SNS-DHT22-AM2302",
+      "description": "Digital temperature and relative humidity sensor with single-bus digital interface",
+      "packageFootprint": "4-pin SIP",
+      "datasheetUrl": "https://www.sparkfun.com/datasheets/Sensors/Temperature/DHT22.pdf",
+      "tags": "sensor,temperature,humidity,digital",
+      "minStockThreshold": 3,
+      "targetStockQuantity": 15,
+      "defaultSupplierId": "sup-lcsc-003",
+      "unitOfMeasure": "pcs",
+      "unitCostCents": 350,
+      "createdAt": "2026-09-25T14:10:00.000Z",
+      "updatedAt": "2026-10-22T13:00:00.000Z",
+      "archivedAt": null
+    },
+    {
+      "id": "c-led-5mm-red",
+      "name": "5mm Red LED 20mA",
+      "category": "Optoelectronics",
+      "manufacturer": "Kingbright",
+      "manufacturerPartNumber": "WP7113ID",
+      "internalSku": "OPT-LED5MM-RED",
+      "description": "High efficiency red LED, 625 nm, 30 mcd, 60° viewing angle",
+      "packageFootprint": "T-1 3/4 (5mm)",
+      "datasheetUrl": null,
+      "tags": "led,indicator,red,5mm",
+      "minStockThreshold": 30,
+      "targetStockQuantity": 200,
+      "defaultSupplierId": "sup-mouser-001",
+      "unitOfMeasure": "pcs",
+      "unitCostCents": 12,
+      "createdAt": "2026-09-05T11:00:00.000Z",
+      "updatedAt": "2026-10-10T15:20:00.000Z",
+      "archivedAt": null
+    },
+    {
+      "id": "c-oled-096-i2c",
+      "name": "0.96\" I2C OLED Display 128x64",
+      "category": "Displays",
+      "manufacturer": "Heltec",
+      "manufacturerPartNumber": "SSD1306-096",
+      "internalSku": "DSP-OLED096-I2C",
+      "description": "Monochrome white OLED graphic display module, SSD1306 controller, 3.3V-5V I2C",
+      "packageFootprint": "Module 27x27mm",
+      "datasheetUrl": null,
+      "tags": "display,oled,i2c,screen",
+      "minStockThreshold": 4,
+      "targetStockQuantity": 12,
+      "defaultSupplierId": "sup-lcsc-003",
+      "unitOfMeasure": "pcs",
+      "unitCostCents": 280,
+      "createdAt": "2026-09-28T16:00:00.000Z",
+      "updatedAt": "2026-10-24T18:00:00.000Z",
+      "archivedAt": null
+    },
+    {
+      "id": "c-ams1117-33",
+      "name": "AMS1117-3.3V LDO Voltage Regulator",
+      "category": "Power ICs",
+      "manufacturer": "Advanced Monolithic Systems",
+      "manufacturerPartNumber": "AMS1117-3.3",
+      "internalSku": "PWR-AMS1117-33",
+      "description": "1A low dropout positive voltage regulator, 3.3V fixed output, SOT-223",
+      "packageFootprint": "SOT-223",
+      "datasheetUrl": "http://www.advanced-monolithic.com/pdf/ds1117.pdf",
+      "tags": "ldo,voltage-regulator,3.3v,power",
+      "minStockThreshold": 15,
+      "targetStockQuantity": 60,
+      "defaultSupplierId": "sup-digikey-002",
+      "unitOfMeasure": "pcs",
+      "unitCostCents": 35,
+      "createdAt": "2026-09-12T10:15:00.000Z",
+      "updatedAt": "2026-10-19T17:40:00.000Z",
+      "archivedAt": null
+    }
+  ],
+  "locations": [
+    {
+      "id": "loc-workshop",
+      "name": "Main Workshop",
+      "parentId": null,
+      "code": "WS-MAIN",
+      "description": "Primary prototyping lab and workbench area",
+      "createdAt": "2026-08-01T08:00:00.000Z",
+      "updatedAt": "2026-08-01T08:00:00.000Z",
+      "archivedAt": null
+    },
+    {
+      "id": "loc-shelf-a",
+      "name": "Shelf A (Active Components)",
+      "parentId": "loc-workshop",
+      "code": "SH-A",
+      "description": "Modular rack holding precision component drawers",
+      "createdAt": "2026-08-01T08:30:00.000Z",
+      "updatedAt": "2026-08-01T08:30:00.000Z",
+      "archivedAt": null
+    },
+    {
+      "id": "loc-shelf-b",
+      "name": "Shelf B (Passives & Modules)",
+      "parentId": "loc-workshop",
+      "code": "SH-B",
+      "description": "Storage rack for reels, spools, and breakout modules",
+      "createdAt": "2026-08-01T08:45:00.000Z",
+      "updatedAt": "2026-08-01T08:45:00.000Z",
+      "archivedAt": null
+    },
+    {
+      "id": "loc-drawer-01",
+      "name": "Drawer 01 - MCUs & Boards",
+      "parentId": "loc-shelf-a",
+      "code": "LOC-001-01",
+      "description": "Anti-static bin for microcontrollers and dev kits",
+      "createdAt": "2026-08-01T09:00:00.000Z",
+      "updatedAt": "2026-08-01T09:00:00.000Z",
+      "archivedAt": null
+    },
+    {
+      "id": "loc-drawer-02",
+      "name": "Drawer 02 - SMD Resistors & Caps",
+      "parentId": "loc-shelf-a",
+      "code": "LOC-001-02",
+      "description": "Compartment tray for 0805 SMD passive tape strips",
+      "createdAt": "2026-08-01T09:15:00.000Z",
+      "updatedAt": "2026-08-01T09:15:00.000Z",
+      "archivedAt": null
+    },
+    {
+      "id": "loc-drawer-03",
+      "name": "Drawer 03 - Sensors & Displays",
+      "parentId": "loc-shelf-a",
+      "code": "LOC-001-03",
+      "description": "Padded drawer for digital sensors, OLEDs, and opto",
+      "createdAt": "2026-08-01T09:30:00.000Z",
+      "updatedAt": "2026-08-01T09:30:00.000Z",
+      "archivedAt": null
+    },
+    {
+      "id": "loc-storage-room",
+      "name": "Long-term Storage Room",
+      "parentId": null,
+      "code": "STOR-01",
+      "description": "Backroom storage for bulk supply reels and hardware",
+      "createdAt": "2026-08-01T10:00:00.000Z",
+      "updatedAt": "2026-08-01T10:00:00.000Z",
+      "archivedAt": null
+    },
+    {
+      "id": "loc-bin-01",
+      "name": "Bin 01 - Bulk Passives",
+      "parentId": "loc-storage-room",
+      "code": "BIN-01",
+      "description": "Overflow inventory box",
+      "createdAt": "2026-08-01T10:30:00.000Z",
+      "updatedAt": "2026-08-01T10:30:00.000Z",
+      "archivedAt": null
+    }
+  ],
+  "inventoryBalances": [
+    {
+      "id": "bal-001",
+      "componentId": "c-esp32-c3-001",
+      "locationId": "loc-drawer-01",
+      "quantity": 18
+    },
+    {
+      "id": "bal-002",
+      "componentId": "c-res-10k-0805",
+      "locationId": "loc-drawer-02",
+      "quantity": 380
+    },
+    {
+      "id": "bal-003",
+      "componentId": "c-res-10k-0805",
+      "locationId": "loc-bin-01",
+      "quantity": 500
+    },
+    {
+      "id": "bal-004",
+      "componentId": "c-cap-100u-25v",
+      "locationId": "loc-drawer-02",
+      "quantity": 64
+    },
+    {
+      "id": "bal-005",
+      "componentId": "c-diode-1n4007",
+      "locationId": "loc-drawer-02",
+      "quantity": 85
+    },
+    {
+      "id": "bal-006",
+      "componentId": "c-dht22-sensor",
+      "locationId": "loc-drawer-03",
+      "quantity": 12
+    },
+    {
+      "id": "bal-007",
+      "componentId": "c-led-5mm-red",
+      "locationId": "loc-drawer-03",
+      "quantity": 140
+    },
+    {
+      "id": "bal-008",
+      "componentId": "c-oled-096-i2c",
+      "locationId": "loc-drawer-03",
+      "quantity": 8
+    },
+    {
+      "id": "bal-009",
+      "componentId": "c-ams1117-33",
+      "locationId": "loc-drawer-01",
+      "quantity": 42
+    }
+  ],
+  "stockMovements": [
+    {
+      "id": "mov-001",
+      "componentId": "c-esp32-c3-001",
+      "movementType": "RECEIVE",
+      "quantityDelta": 20,
+      "sourceLocationId": null,
+      "destinationLocationId": "loc-drawer-01",
+      "unitCostCents": 420,
+      "projectId": null,
+      "supplierId": "sup-mouser-001",
+      "purchaseOrderId": "po-001",
+      "notes": "Initial stock receipt from PO-2026-001",
+      "createdAt": "2026-10-02T10:00:00.000Z"
+    },
+    {
+      "id": "mov-002",
+      "componentId": "c-esp32-c3-001",
+      "movementType": "CONSUME",
+      "quantityDelta": -2,
+      "sourceLocationId": "loc-drawer-01",
+      "destinationLocationId": null,
+      "unitCostCents": 420,
+      "projectId": "proj-smart-monitor",
+      "supplierId": null,
+      "purchaseOrderId": null,
+      "notes": "Prototypes for Smart Ambient Monitor v1",
+      "createdAt": "2026-10-15T14:20:00.000Z"
+    },
+    {
+      "id": "mov-003",
+      "componentId": "c-res-10k-0805",
+      "movementType": "RECEIVE",
+      "quantityDelta": 1000,
+      "sourceLocationId": null,
+      "destinationLocationId": "loc-bin-01",
+      "unitCostCents": 2,
+      "projectId": null,
+      "supplierId": "sup-lcsc-003",
+      "purchaseOrderId": "po-002",
+      "notes": "Bulk SMD reel delivery",
+      "createdAt": "2026-09-18T11:30:00.000Z"
+    },
+    {
+      "id": "mov-004",
+      "componentId": "c-res-10k-0805",
+      "movementType": "TRANSFER",
+      "quantityDelta": 500,
+      "sourceLocationId": "loc-bin-01",
+      "destinationLocationId": "loc-drawer-02",
+      "unitCostCents": 2,
+      "projectId": null,
+      "supplierId": null,
+      "purchaseOrderId": null,
+      "notes": "Moved 500 pcs tape strip to workbench drawer",
+      "createdAt": "2026-10-01T09:00:00.000Z"
+    },
+    {
+      "id": "mov-005",
+      "componentId": "c-dht22-sensor",
+      "movementType": "RECEIVE",
+      "quantityDelta": 15,
+      "sourceLocationId": null,
+      "destinationLocationId": "loc-drawer-03",
+      "unitCostCents": 350,
+      "projectId": null,
+      "supplierId": "sup-lcsc-003",
+      "purchaseOrderId": "po-002",
+      "notes": "Environmental sensors delivery",
+      "createdAt": "2026-09-28T15:00:00.000Z"
+    },
+    {
+      "id": "mov-006",
+      "componentId": "c-dht22-sensor",
+      "movementType": "CONSUME",
+      "quantityDelta": -3,
+      "sourceLocationId": "loc-drawer-03",
+      "destinationLocationId": null,
+      "unitCostCents": 350,
+      "projectId": "proj-smart-monitor",
+      "supplierId": null,
+      "purchaseOrderId": null,
+      "notes": "Installed in laboratory environmental monitor units",
+      "createdAt": "2026-10-20T16:45:00.000Z"
+    }
+  ],
+  "suppliers": [
+    {
+      "id": "sup-mouser-001",
+      "name": "Mouser Electronics",
+      "email": "sales@mouser.com",
+      "website": "https://www.mouser.com",
+      "phone": "+1 800 346 6873",
+      "notes": "Preferred authorized distributor for MCUs, precision ICs, and connectors",
+      "createdAt": "2026-08-01T09:00:00.000Z"
+    },
+    {
+      "id": "sup-digikey-002",
+      "name": "Digi-Key Electronics",
+      "email": "sales@digikey.com",
+      "website": "https://www.digikey.com",
+      "phone": "+1 800 344 4539",
+      "notes": "Rapid express dispatch for development prototypes and passives",
+      "createdAt": "2026-08-01T09:10:00.000Z"
+    },
+    {
+      "id": "sup-lcsc-003",
+      "name": "LCSC Electronics",
+      "email": "service@lcsc.com",
+      "website": "https://www.lcsc.com",
+      "phone": "+86 400 830 2050",
+      "notes": "High-volume Asian components, JLCPCB parts library, cost-effective passives",
+      "createdAt": "2026-08-01T09:20:00.000Z"
+    }
+  ],
+  "purchaseOrders": [
+    {
+      "id": "po-001",
+      "poNumber": "PO-2026-001",
+      "supplierId": "sup-mouser-001",
+      "status": "RECEIVED",
+      "orderDate": "2026-09-28T09:00:00.000Z",
+      "expectedDeliveryDate": "2026-10-02T18:00:00.000Z",
+      "currency": "USD",
+      "notes": "Q4 Prototyping Batch - MCUs & LDOs",
+      "totalCostCents": 9840,
+      "createdAt": "2026-09-28T09:00:00.000Z",
+      "updatedAt": "2026-10-02T10:15:00.000Z"
+    },
+    {
+      "id": "po-002",
+      "poNumber": "PO-2026-002",
+      "supplierId": "sup-lcsc-003",
+      "status": "RECEIVED",
+      "orderDate": "2026-09-15T08:00:00.000Z",
+      "expectedDeliveryDate": "2026-09-25T18:00:00.000Z",
+      "currency": "USD",
+      "notes": "Bulk SMD Passives & Displays",
+      "totalCostCents": 9490,
+      "createdAt": "2026-09-15T08:00:00.000Z",
+      "updatedAt": "2026-09-28T15:30:00.000Z"
+    }
+  ],
+  "purchaseOrderItems": [
+    {
+      "id": "poi-001",
+      "purchaseOrderId": "po-001",
+      "componentId": "c-esp32-c3-001",
+      "orderedQuantity": 20,
+      "receivedQuantity": 20,
+      "unitCostCents": 420,
+      "createdAt": "2026-09-28T09:00:00.000Z"
+    },
+    {
+      "id": "poi-002",
+      "purchaseOrderId": "po-001",
+      "componentId": "c-ams1117-33",
+      "orderedQuantity": 40,
+      "receivedQuantity": 40,
+      "unitCostCents": 35,
+      "createdAt": "2026-09-28T09:00:00.000Z"
+    },
+    {
+      "id": "poi-003",
+      "purchaseOrderId": "po-002",
+      "componentId": "c-res-10k-0805",
+      "orderedQuantity": 1000,
+      "receivedQuantity": 1000,
+      "unitCostCents": 2,
+      "createdAt": "2026-09-15T08:00:00.000Z"
+    },
+    {
+      "id": "poi-004",
+      "purchaseOrderId": "po-002",
+      "componentId": "c-dht22-sensor",
+      "orderedQuantity": 15,
+      "receivedQuantity": 15,
+      "unitCostCents": 350,
+      "createdAt": "2026-09-15T08:00:00.000Z"
+    },
+    {
+      "id": "poi-005",
+      "purchaseOrderId": "po-002",
+      "componentId": "c-oled-096-i2c",
+      "orderedQuantity": 8,
+      "receivedQuantity": 8,
+      "unitCostCents": 280,
+      "createdAt": "2026-09-15T08:00:00.000Z"
+    }
+  ],
+  "projects": [
+    {
+      "id": "proj-smart-monitor",
+      "name": "Smart Ambient Monitor",
+      "description": "Connected workshop air quality, temperature, and telemetry node running on ESP32-C3 with local OLED display",
+      "status": "ACTIVE",
+      "createdAt": "2026-10-05T12:00:00.000Z",
+      "updatedAt": "2026-10-25T16:00:00.000Z"
+    },
+    {
+      "id": "proj-smart-plug",
+      "name": "Smart Power Metering Relay",
+      "description": "Mains voltage relay switch with integrated current sensing and wireless MQTT control",
+      "status": "PLANNING",
+      "createdAt": "2026-10-12T14:30:00.000Z",
+      "updatedAt": "2026-10-26T10:00:00.000Z"
+    }
+  ],
+  "projectBoms": [
+    {
+      "id": "bom-001",
+      "projectId": "proj-smart-monitor",
+      "componentId": "c-esp32-c3-001",
+      "quantityRequired": 1,
+      "referenceDesignator": "U1",
+      "notes": "Main MCU module"
+    },
+    {
+      "id": "bom-002",
+      "projectId": "proj-smart-monitor",
+      "componentId": "c-dht22-sensor",
+      "quantityRequired": 1,
+      "referenceDesignator": "SEN1",
+      "notes": "Ambient temp/humidity"
+    },
+    {
+      "id": "bom-003",
+      "projectId": "proj-smart-monitor",
+      "componentId": "c-oled-096-i2c",
+      "quantityRequired": 1,
+      "referenceDesignator": "DISP1",
+      "notes": "Front panel user readout"
+    },
+    {
+      "id": "bom-004",
+      "projectId": "proj-smart-monitor",
+      "componentId": "c-res-10k-0805",
+      "quantityRequired": 2,
+      "referenceDesignator": "R1, R2",
+      "notes": "I2C SDA and SCL pull-up resistors"
+    },
+    {
+      "id": "bom-005",
+      "projectId": "proj-smart-monitor",
+      "componentId": "c-cap-100u-25v",
+      "quantityRequired": 1,
+      "referenceDesignator": "C1",
+      "notes": "Power rail decoupling bulk capacitor"
+    },
+    {
+      "id": "bom-006",
+      "projectId": "proj-smart-monitor",
+      "componentId": "c-ams1117-33",
+      "quantityRequired": 1,
+      "referenceDesignator": "VR1",
+      "notes": "5V USB to 3.3V LDO"
+    }
+  ],
+  "stocktakeSessions": [
+    {
+      "id": "st-session-001",
+      "locationId": "loc-workshop",
+      "status": "COMPLETED",
+      "startedAt": "2026-10-20T10:00:00.000Z",
+      "completedAt": "2026-10-20T11:30:00.000Z",
+      "notes": "Q4 general stocktake for main workshop"
+    }
+  ],
+  "stocktakeEntries": [
+    {
+      "id": "st-entry-001",
+      "sessionId": "st-session-001",
+      "componentId": "c-esp32-c3-001",
+      "expectedQuantity": 15,
+      "countedQuantity": 15,
+      "reconciled": true
+    },
+    {
+      "id": "st-entry-002",
+      "sessionId": "st-session-001",
+      "componentId": "c-res-10k-0805",
+      "expectedQuantity": 250,
+      "countedQuantity": 245,
+      "reconciled": true
+    }
+  ],
+  "appSettings": [
+    {
+      "key": "app_version",
+      "value": "1.0.0"
+    }
+  ],
+  "preferences": {
+    "language": "English",
+    "currency": "USD",
+    "usdToTomanRate": 275000.0,
+    "themeMode": "dark",
+    "activeColor": 4294936320
+  }
+}

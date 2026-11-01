@@ -1,0 +1,70 @@
+name: Build & Release PartPouch APK
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build-and-release:
+    name: Build & Release APK
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Java JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+          cache: 'gradle'
+
+      - name: Set up Flutter SDK
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+          cache-key: "flutter-:os:-:channel:-:version:-:arch:-:hash:"
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Run static analysis & unit tests
+        run: |
+          flutter analyze
+          flutter test
+
+      - name: Build Android Release APK
+        run: flutter build apk --release
+
+      - name: Prepare Release Asset
+        run: |
+          mkdir -p release_assets
+          cp build/app/outputs/flutter-apk/app-release.apk release_assets/PartPouch-${{ github.ref_name }}.apk
+
+      - name: Create GitHub Release & Upload APK
+        uses: softprops/action-gh-release@v2
+        with:
+          files: release_assets/PartPouch-${{ github.ref_name }}.apk
+          name: PartPouch ${{ github.ref_name }}
+          body: |
+            ## 📦 PartPouch Release ${{ github.ref_name }}
+
+            ### 🚀 What's New
+            - Automated Release Build for PartPouch Mobile Inventory & Component Management System.
+            - Built with Flutter 3 & Drift SQLite database engine.
+
+            ### 📲 Downloads
+            - **`PartPouch-${{ github.ref_name }}.apk`**: Universal Release APK for Android devices (ARM64 / ARMv7 / x86_64).
+
+            ---
+            *Built automatically by GitHub Actions CI/CD.*
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

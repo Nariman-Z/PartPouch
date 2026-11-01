@@ -1,0 +1,72 @@
+# Miscellaneous
+*.class
+*.log
+*.pyc
+*.swp
+.DS_Store
+.atom/
+.build/
+.buildlog/
+.history
+.svn/
+.swiftpm/
+migrate_working_dir/
+
+# IntelliJ / Android Studio
+*.iml
+*.ipr
+*.iws
+.idea/
+.kotlin/
+.gradle/
+cmake_build/
+
+# VS Code
+.vscode/
+
+# Flutter / Dart / Pub
+**/doc/api/
+**/ios/Flutter/.last_build_id
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+.pub-cache/
+.pub/
+/build/
+/coverage/
+
+# Android specific
+/android/app/debug
+/android/app/profile
+/android/app/release
+/android/key.properties
+/android/local.properties
+/android/.gradle
+*.keystore
+*.jks
+
+# iOS specific
+**/ios/Flutter/App.framework
+**/ios/Flutter/Flutter.framework
+**/ios/Flutter/Flutter.podspec
+**/ios/Flutter/Generated.xcconfig
+**/ios/Flutter/app.flx
+**/ios/Flutter/app.zip
+**/ios/Flutter/flutter_assets/
+**/ios/ServiceDefinitions.json
+**/ios/Runner/GeneratedPluginRegistrant.h
+**/ios/Runner/GeneratedPluginRegistrant.m
+
+# Linux / Windows / Web build outputs
+/linux/flutter/ephemeral/
+/windows/flutter/ephemeral/
+/web/
+
+# Symbols & Obfuscation maps
+app.*.symbols
+app.*.map.json
+
+# Environment & Secrets
+*.env
+*.secret

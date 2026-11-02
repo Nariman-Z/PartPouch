@@ -1,4 +1,5 @@
 import 'package:drift/drift.dart' hide Component;
+import 'package:flutter/material.dart' show IconData, Icons;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
 import '../../../core/database/database.dart';
@@ -10,16 +11,23 @@ class ProjectWithBomSummary {
   final int totalBomItems;
   final int completedBomItems;
   final int totalEstimatedCostCents;
+  final int? iconCodePoint;
 
   const ProjectWithBomSummary({
     required this.project,
     required this.totalBomItems,
     required this.completedBomItems,
     required this.totalEstimatedCostCents,
+    this.iconCodePoint,
   });
 
   bool get isFullyStocked =>
       totalBomItems > 0 && completedBomItems >= totalBomItems;
+
+  IconData get iconData => iconCodePoint != null
+      // ignore: non_const_argument_for_const_parameter
+      ? IconData(iconCodePoint!, fontFamily: 'MaterialIcons')
+      : Icons.build_outlined;
 }
 
 class ProjectBomItemDetail {
@@ -63,6 +71,14 @@ class ProjectsRepository {
     return query.watch().asyncMap((projects) async {
       final List<ProjectWithBomSummary> results = [];
 
+      final iconSettings = await (_db.select(_db.appSettings)
+            ..where((tbl) => tbl.key.like('project_icon_%')))
+          .get();
+      final iconMap = {
+        for (final s in iconSettings)
+          s.key.replaceFirst('project_icon_', ''): int.tryParse(s.value),
+      };
+
       for (final project in projects) {
         final boms = await (_db.select(_db.projectBoms).join([
           innerJoin(
@@ -100,6 +116,7 @@ class ProjectsRepository {
             totalBomItems: boms.length,
             completedBomItems: completed,
             totalEstimatedCostCents: cost,
+            iconCodePoint: iconMap[project.id],
           ),
         );
       }
@@ -152,6 +169,7 @@ class ProjectsRepository {
     String? description,
     String status = 'inProgress',
     DateTime? targetDate,
+    int? iconCodePoint,
   }) async {
     final trimmedName = name.trim();
     if (trimmedName.isEmpty) {
@@ -175,6 +193,15 @@ class ProjectsRepository {
           ),
         );
 
+    if (iconCodePoint != null) {
+      await _db.into(_db.appSettings).insertOnConflictUpdate(
+            AppSettingsCompanion.insert(
+              key: 'project_icon_$id',
+              value: iconCodePoint.toString(),
+            ),
+          );
+    }
+
     return id;
   }
 
@@ -184,6 +211,7 @@ class ProjectsRepository {
     String? description,
     required String status,
     DateTime? targetDate,
+    int? iconCodePoint,
   }) async {
     final trimmedName = name.trim();
     if (trimmedName.isEmpty) {
@@ -199,6 +227,40 @@ class ProjectsRepository {
         updatedAt: Value(DateTime.now()),
       ),
     );
+
+    if (iconCodePoint != null) {
+      await _db.into(_db.appSettings).insertOnConflictUpdate(
+            AppSettingsCompanion.insert(
+              key: 'project_icon_$id',
+              value: iconCodePoint.toString(),
+            ),
+          );
+    }
+  }
+
+  Future<void> setProjectIcon(String projectId, int iconCodePoint) async {
+    await _db.into(_db.appSettings).insertOnConflictUpdate(
+          AppSettingsCompanion.insert(
+            key: 'project_icon_$projectId',
+            value: iconCodePoint.toString(),
+          ),
+        );
+    await (_db.update(_db.projects)..where((tbl) => tbl.id.equals(projectId)))
+        .write(ProjectsCompanion(updatedAt: Value(DateTime.now())));
+  }
+
+  Stream<int?> watchProjectIcon(String projectId) {
+    return (_db.select(_db.appSettings)
+          ..where((tbl) => tbl.key.equals('project_icon_$projectId')))
+        .watchSingleOrNull()
+        .map((s) => s != null ? int.tryParse(s.value) : null);
+  }
+
+  Future<int?> getProjectIcon(String projectId) async {
+    final record = await (_db.select(_db.appSettings)
+          ..where((tbl) => tbl.key.equals('project_icon_$projectId')))
+        .getSingleOrNull();
+    return record != null ? int.tryParse(record.value) : null;
   }
 
   Future<void> addBomItem({

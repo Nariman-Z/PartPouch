@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../app/theme/app_colors.dart';
 import '../../../app/theme/app_spacing.dart';
+import '../../../core/theme/category_colors.dart';
 import '../../../core/theme/theme_provider.dart';
 import '../../../core/widgets/pp_button.dart';
 import '../../../core/widgets/pp_card.dart';
@@ -108,19 +109,43 @@ class LowStockScreen extends ConsumerWidget {
                                   Expanded(
                                     child: Column(
                                       crossAxisAlignment: CrossAxisAlignment.start,
+                                      mainAxisSize: MainAxisSize.min,
                                       children: [
-                                        Text(
-                                          comp.name,
-                                          style: theme.textStyle(
-                                            fontSize: 14,
-                                            fontWeight: FontWeight.w600,
-                                            color: theme.textColor,
+                                        CategoryColors.buildTitleRichText(
+                                          name: comp.name,
+                                          category: comp.category,
+                                          textColor: theme.textColor,
+                                          subTextColor: theme.subTextColor,
+                                          fontSize: 14,
+                                          isPersian:
+                                              theme.currentLanguage == 'Persian',
+                                        ),
+                                        if (comp.packageFootprint != null &&
+                                            comp.packageFootprint!.trim().isNotEmpty) ...[
+                                          const SizedBox(height: 3),
+                                          Text(
+                                            comp.packageFootprint!,
+                                            style: theme.textStyle(
+                                              fontSize: 11.5,
+                                              fontWeight: FontWeight.w500,
+                                              color: theme.subTextColor,
+                                            ),
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
                                           ),
-                                        ),
-                                        Text(
-                                          '${comp.category}${comp.internalSku != null ? ' • ${comp.internalSku}' : ''}',
-                                          style: theme.textStyle(fontSize: 12, color: theme.subTextColor),
-                                        ),
+                                        ] else if (comp.internalSku != null &&
+                                            comp.internalSku!.trim().isNotEmpty) ...[
+                                          const SizedBox(height: 3),
+                                          Text(
+                                            comp.internalSku!,
+                                            style: theme.textStyle(
+                                              fontSize: 11.5,
+                                              color: theme.subTextColor,
+                                            ),
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                        ],
                                         const SizedBox(height: 4),
                                         Text(
                                           '${theme.translate('quantity')}: ${theme.formatNumber(item.totalStock)} / ${theme.formatNumber(comp.minStockThreshold)} ${comp.unitOfMeasure}',

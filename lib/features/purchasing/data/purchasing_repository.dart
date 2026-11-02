@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:drift/drift.dart' hide Component;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
@@ -67,7 +68,12 @@ class PurchasingRepository {
     if (statusFilter != null &&
         statusFilter.isNotEmpty &&
         statusFilter != 'All') {
-      query.where((tbl) => tbl.status.equals(statusFilter));
+      if (statusFilter == 'draft') {
+        query.where((tbl) =>
+            tbl.status.equals('draft') | tbl.status.equals('ordered'));
+      } else {
+        query.where((tbl) => tbl.status.equals(statusFilter));
+      }
     }
     query.orderBy([(tbl) => OrderingTerm.desc(tbl.createdAt)]);
 
@@ -367,5 +373,301 @@ class PurchasingRepository {
         updatedAt: Value(DateTime.now()),
       ),
     );
+  }
+
+  /// Exports all purchase orders and line items to formatted JSON
+  Future<String> exportPurchaseOrdersToJson() async {
+    final pos = await (_db.select(_db.purchaseOrders)
+          ..orderBy([(tbl) => OrderingTerm.desc(tbl.createdAt)]))
+        .get();
+
+    final List<Map<String, dynamic>> ordersJson = [];
+
+    for (final po in pos) {
+      Supplier? supplier;
+      if (po.supplierId != null) {
+        supplier = await (_db.select(_db.suppliers)
+              ..where((tbl) => tbl.id.equals(po.supplierId!)))
+            .getSingleOrNull();
+      }
+
+      final items = await (_db.select(_db.purchaseOrderItems).join([
+        innerJoin(
+          _db.components,
+          _db.components.id.equalsExp(_db.purchaseOrderItems.componentId),
+        ),
+      ])..where(_db.purchaseOrderItems.purchaseOrderId.equals(po.id))).get();
+
+      final itemsJson = items.map((row) {
+        final poi = row.readTable(_db.purchaseOrderItems);
+        final comp = row.readTable(_db.components);
+        return {
+          'componentName': comp.name,
+          'componentCategory': comp.category,
+          'mpn': comp.manufacturerPartNumber,
+          'sku': comp.internalSku,
+          'orderedQuantity': poi.orderedQuantity,
+          'receivedQuantity': poi.receivedQuantity,
+          'unitCostCents': poi.unitCostCents,
+          'supplierPartNumber': poi.supplierPartNumber,
+        };
+      }).toList();
+
+      ordersJson.add({
+        'orderNumber': po.orderNumber,
+        'supplierName': supplier?.name,
+        'orderDate': po.orderDate.toIso8601String(),
+        'expectedArrivalDate': po.expectedArrivalDate?.toIso8601String(),
+        'status': po.status,
+        'currency': po.currency,
+        'notes': po.notes,
+        'items': itemsJson,
+      });
+    }
+
+    final data = {
+      'app': 'PartPouch',
+      'type': 'purchase_orders',
+      'version': 1,
+      'exportedAt': DateTime.now().toIso8601String(),
+      'count': ordersJson.length,
+      'purchaseOrders': ordersJson,
+    };
+
+    return const JsonEncoder.withIndent('  ').convert(data);
+  }
+
+  /// Parses JSON and imports purchase orders and their line items
+  Future<int> importPurchaseOrdersFromJson(String jsonString) async {
+    final dynamic decoded = jsonDecode(jsonString);
+    final List<dynamic> list;
+
+    if (decoded is List) {
+      list = decoded;
+    } else if (decoded is Map && decoded['purchaseOrders'] is List) {
+      list = decoded['purchaseOrders'] as List;
+    } else {
+      throw const PartPouchException('Invalid purchase orders JSON format.');
+    }
+
+    int importedCount = 0;
+    final now = DateTime.now();
+
+    for (final raw in list) {
+      if (raw is! Map) continue;
+      final orderNumber = raw['orderNumber']?.toString().trim();
+      if (orderNumber == null || orderNumber.isEmpty) continue;
+
+      final existing = await (_db.select(_db.purchaseOrders)
+            ..where((tbl) => tbl.orderNumber.equals(orderNumber)))
+          .getSingleOrNull();
+
+      if (existing != null) continue;
+
+      String? supplierId;
+      final supplierName = raw['supplierName']?.toString().trim();
+      if (supplierName != null && supplierName.isNotEmpty) {
+        final existingSup = await (_db.select(_db.suppliers)
+              ..where((tbl) => tbl.name.equals(supplierName)))
+            .getSingleOrNull();
+        if (existingSup != null) {
+          supplierId = existingSup.id;
+        } else {
+          supplierId = _uuid.v4();
+          await _db.into(_db.suppliers).insert(
+                SuppliersCompanion.insert(
+                  id: supplierId,
+                  name: supplierName,
+                  createdAt: now,
+                ),
+              );
+        }
+      }
+
+      final poId = _uuid.v4();
+      final orderDate = raw['orderDate'] != null
+          ? DateTime.tryParse(raw['orderDate'].toString()) ?? now
+          : now;
+      final expectedDate = raw['expectedArrivalDate'] != null
+          ? DateTime.tryParse(raw['expectedArrivalDate'].toString())
+          : null;
+      final status = raw['status']?.toString() ?? 'ordered';
+      final currency = raw['currency']?.toString() ?? 'USD';
+      final notes = raw['notes']?.toString();
+
+      await _db.into(_db.purchaseOrders).insert(
+            PurchaseOrdersCompanion.insert(
+              id: poId,
+              orderNumber: orderNumber,
+              supplierId: Value(supplierId),
+              orderDate: orderDate,
+              expectedArrivalDate: Value(expectedDate),
+              status: status,
+              currency: Value(currency),
+              notes: Value(notes),
+              createdAt: now,
+              updatedAt: now,
+            ),
+          );
+
+      final rawItems = raw['items'];
+      if (rawItems is List) {
+        for (final rawItem in rawItems) {
+          if (rawItem is! Map) continue;
+          final compName = rawItem['componentName']?.toString().trim();
+          final mpn = rawItem['mpn']?.toString().trim();
+          final sku = rawItem['sku']?.toString().trim();
+
+          Component? comp;
+          if (mpn != null && mpn.isNotEmpty) {
+            comp = await (_db.select(_db.components)
+                  ..where((tbl) => tbl.manufacturerPartNumber.equals(mpn)))
+                .getSingleOrNull();
+          }
+          if (comp == null && sku != null && sku.isNotEmpty) {
+            comp = await (_db.select(_db.components)
+                  ..where((tbl) => tbl.internalSku.equals(sku)))
+                .getSingleOrNull();
+          }
+          if (comp == null && compName != null && compName.isNotEmpty) {
+            comp = await (_db.select(_db.components)
+                  ..where((tbl) => tbl.name.equals(compName)))
+                .getSingleOrNull();
+          }
+
+          String componentId;
+          if (comp != null) {
+            componentId = comp.id;
+          } else {
+            componentId = _uuid.v4();
+            await _db.into(_db.components).insert(
+                  ComponentsCompanion.insert(
+                    id: componentId,
+                    name: compName ?? (mpn ?? 'Component'),
+                    category:
+                        rawItem['componentCategory']?.toString() ?? 'Other',
+                    manufacturerPartNumber: Value(mpn),
+                    internalSku: Value(sku),
+                    createdAt: now,
+                    updatedAt: now,
+                  ),
+                );
+          }
+
+          final orderedQty =
+              int.tryParse(rawItem['orderedQuantity']?.toString() ?? '1') ?? 1;
+          final receivedQty =
+              int.tryParse(rawItem['receivedQuantity']?.toString() ?? '0') ?? 0;
+          final unitCost =
+              int.tryParse(rawItem['unitCostCents']?.toString() ?? '0') ?? 0;
+
+          await _db.into(_db.purchaseOrderItems).insert(
+                PurchaseOrderItemsCompanion.insert(
+                  id: _uuid.v4(),
+                  purchaseOrderId: poId,
+                  componentId: componentId,
+                  orderedQuantity: orderedQty,
+                  receivedQuantity: Value(receivedQty),
+                  unitCostCents: Value(unitCost),
+                  supplierPartNumber:
+                      Value(rawItem['supplierPartNumber']?.toString()),
+                ),
+              );
+        }
+      }
+
+      importedCount++;
+    }
+
+    return importedCount;
+  }
+
+  /// Seeds default realistic purchase orders if none exist
+  Future<int> seedDefaultPurchaseOrders() async {
+    final existing = await (_db.select(_db.purchaseOrders)).get();
+    if (existing.isNotEmpty) return 0;
+
+    final suppliers = await (_db.select(_db.suppliers)..limit(3)).get();
+    final components = await (_db.select(_db.components)..limit(4)).get();
+
+    final now = DateTime.now();
+    int createdCount = 0;
+
+    final supplier1 = suppliers.isNotEmpty ? suppliers[0].id : null;
+    final supplier2 = suppliers.length > 1 ? suppliers[1].id : supplier1;
+
+    final po1Id = _uuid.v4();
+    await _db.into(_db.purchaseOrders).insert(
+          PurchaseOrdersCompanion.insert(
+            id: po1Id,
+            orderNumber: 'PO-2026-001',
+            supplierId: Value(supplier1),
+            orderDate: now.subtract(const Duration(days: 3)),
+            expectedArrivalDate: Value(now.add(const Duration(days: 4))),
+            status: 'ordered',
+            currency: const Value('USD'),
+            notes: const Value('Restocking passives and microcontrollers'),
+            createdAt: now.subtract(const Duration(days: 3)),
+            updatedAt: now,
+          ),
+        );
+    createdCount++;
+
+    if (components.isNotEmpty) {
+      await _db.into(_db.purchaseOrderItems).insert(
+            PurchaseOrderItemsCompanion.insert(
+              id: _uuid.v4(),
+              purchaseOrderId: po1Id,
+              componentId: components[0].id,
+              orderedQuantity: 25,
+              receivedQuantity: const Value(0),
+              unitCostCents: Value(components[0].unitCostCents ?? 150),
+            ),
+          );
+    }
+    if (components.length > 1) {
+      await _db.into(_db.purchaseOrderItems).insert(
+            PurchaseOrderItemsCompanion.insert(
+              id: _uuid.v4(),
+              purchaseOrderId: po1Id,
+              componentId: components[1].id,
+              orderedQuantity: 100,
+              receivedQuantity: const Value(0),
+              unitCostCents: Value(components[1].unitCostCents ?? 5),
+            ),
+          );
+    }
+
+    final po2Id = _uuid.v4();
+    await _db.into(_db.purchaseOrders).insert(
+          PurchaseOrdersCompanion.insert(
+            id: po2Id,
+            orderNumber: 'PO-2026-002',
+            supplierId: Value(supplier2),
+            orderDate: now.subtract(const Duration(days: 10)),
+            expectedArrivalDate: Value(now.subtract(const Duration(days: 2))),
+            status: 'partiallyReceived',
+            currency: const Value('USD'),
+            notes: const Value('Sensors and IC breakout modules'),
+            createdAt: now.subtract(const Duration(days: 10)),
+            updatedAt: now,
+          ),
+        );
+    createdCount++;
+
+    if (components.length > 2) {
+      await _db.into(_db.purchaseOrderItems).insert(
+            PurchaseOrderItemsCompanion.insert(
+              id: _uuid.v4(),
+              purchaseOrderId: po2Id,
+              componentId: components[2].id,
+              orderedQuantity: 50,
+              receivedQuantity: const Value(20),
+              unitCostCents: Value(components[2].unitCostCents ?? 25),
+            ),
+          );
+    }
+
+    return createdCount;
   }
 }

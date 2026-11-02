@@ -9,11 +9,13 @@ class ComponentWithStock {
   final Component component;
   final int totalStock;
   final int locationCount;
+  final String locationDisplay;
 
   const ComponentWithStock({
     required this.component,
     required this.totalStock,
     required this.locationCount,
+    this.locationDisplay = '',
   });
 
   bool get isOutOfStock => totalStock <= 0;
@@ -73,6 +75,8 @@ class InventoryRepository {
     // 2. Watch components and balances
     return compQuery.watch().asyncMap((components) async {
       final allBalances = await _db.select(_db.inventoryBalances).get();
+      final allLocations = await _db.select(_db.locations).get();
+      final locationMap = {for (final l in allLocations) l.id: l.name};
 
       // Filter by locationId if specified
       final Map<String, List<InventoryBalance>> compBalancesMap = {};
@@ -86,7 +90,13 @@ class InventoryRepository {
       for (final comp in components) {
         final balances = compBalancesMap[comp.id] ?? [];
         final totalStock = balances.fold<int>(0, (sum, b) => sum + b.quantity);
-        final locationCount = balances.where((b) => b.quantity > 0).length;
+        final nonZeroBalances = balances.where((b) => b.quantity > 0).toList();
+        final locationCount = nonZeroBalances.length;
+        final locNames = nonZeroBalances
+            .map((b) => locationMap[b.locationId])
+            .whereType<String>()
+            .toList();
+        final locationDisplay = locNames.join(', ');
 
         // If filtering by location and item not present in location, skip
         if (locationId != null && totalStock == 0 && balances.isEmpty) {
@@ -97,6 +107,7 @@ class InventoryRepository {
           component: comp,
           totalStock: totalStock,
           locationCount: locationCount,
+          locationDisplay: locationDisplay,
         );
 
         if (inStockOnly == true && !item.isInStock) continue;

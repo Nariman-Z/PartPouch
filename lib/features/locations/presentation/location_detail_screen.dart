@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/database/database.dart';
 import '../../../core/formatting/currency_formatter.dart';
+import '../../../core/theme/category_colors.dart';
 import '../../../core/theme/theme_provider.dart';
 import '../../../core/utils/app_snackbar.dart';
 import '../../../core/widgets/pp_empty_state.dart';
@@ -28,6 +29,9 @@ class LocationDetailScreen extends ConsumerWidget {
     final componentsAsync = ref
         .watch(locationsRepositoryProvider)
         .watchComponentsInLocation(locationId);
+    final subLocationsAsync = ref
+        .watch(locationsRepositoryProvider)
+        .watchSubLocations(locationId);
 
     return ListenableBuilder(
       listenable: theme,
@@ -250,19 +254,99 @@ class LocationDetailScreen extends ConsumerWidget {
                                     Text(
                                       location.name,
                                       style: theme.textStyle(
-                                        fontSize: 16,
+                                        fontSize: 18,
                                         fontWeight: FontWeight.bold,
                                         color: theme.textColor,
                                       ),
                                     ),
-                                    if (location.code != null) ...[
-                                      const SizedBox(height: 4),
-                                      Text(
-                                        location.code!,
-                                        style: theme.textStyle(
-                                          fontSize: 12,
-                                          color: theme.subTextColor,
+                                    if (location.code != null &&
+                                        location.code!.isNotEmpty) ...[
+                                      const SizedBox(height: 6),
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 8,
+                                          vertical: 3,
                                         ),
+                                        decoration: BoxDecoration(
+                                          color: theme.activeColor
+                                              .withValues(alpha: 0.12),
+                                          borderRadius:
+                                              BorderRadius.circular(8),
+                                          border: Border.all(
+                                            color: theme.activeColor
+                                                .withValues(alpha: 0.35),
+                                            width: 1,
+                                          ),
+                                        ),
+                                        child: Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            Icon(
+                                              Icons.qr_code_2_rounded,
+                                              size: 14,
+                                              color: theme.activeColor,
+                                            ),
+                                            const SizedBox(width: 5),
+                                            Text(
+                                              location.code!,
+                                              style: theme.textStyle(
+                                                fontSize: 12,
+                                                fontWeight: FontWeight.bold,
+                                                color: theme.activeColor,
+                                                letterSpacing: 0.5,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ],
+                                    if (location.parentId != null) ...[
+                                      const SizedBox(height: 6),
+                                      StreamBuilder<Location?>(
+                                        stream: ref
+                                            .watch(locationsRepositoryProvider)
+                                            .watchParentLocation(
+                                              location.parentId,
+                                            ),
+                                        builder: (context, pSnapshot) {
+                                          final parent = pSnapshot.data;
+                                          if (parent == null) {
+                                            return const SizedBox.shrink();
+                                          }
+                                          return InkWell(
+                                            onTap: () => context
+                                                .push('/location/${parent.id}'),
+                                            borderRadius:
+                                                BorderRadius.circular(6),
+                                            child: Row(
+                                              mainAxisSize: MainAxisSize.min,
+                                              children: [
+                                                Icon(
+                                                  Icons
+                                                      .subdirectory_arrow_right_rounded,
+                                                  size: 14,
+                                                  color: theme.subTextColor,
+                                                ),
+                                                const SizedBox(width: 4),
+                                                Text(
+                                                  '${theme.translate('parent_location')}: ',
+                                                  style: theme.textStyle(
+                                                    fontSize: 12,
+                                                    color: theme.subTextColor,
+                                                  ),
+                                                ),
+                                                Text(
+                                                  parent.name,
+                                                  style: theme.textStyle(
+                                                    fontSize: 12,
+                                                    fontWeight: FontWeight.w600,
+                                                    color: theme.activeColor,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          );
+                                        },
                                       ),
                                     ],
                                   ],
@@ -303,7 +387,8 @@ class LocationDetailScreen extends ConsumerWidget {
                                 Expanded(
                                   child: _buildSmallStatCard(
                                     label: theme.translate('components'),
-                                    value: theme.formatNumber(stats.componentCount),
+                                    value: theme
+                                        .formatNumber(stats.componentCount),
                                     theme: theme,
                                   ),
                                 ),
@@ -326,6 +411,194 @@ class LocationDetailScreen extends ConsumerWidget {
                                     ),
                                     theme: theme,
                                   ),
+                                ),
+                              ],
+                            );
+                          },
+                        ),
+                        const SizedBox(height: 24),
+
+                        // Sub-locations Section (if any)
+                        StreamBuilder<List<Location>>(
+                          stream: subLocationsAsync,
+                          builder: (context, subSnapshot) {
+                            final subs = subSnapshot.data ?? [];
+                            if (subs.isEmpty) return const SizedBox.shrink();
+
+                            return Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Text(
+                                      theme.translate('sub_locations'),
+                                      style: theme.textStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold,
+                                        color: theme.textColor,
+                                      ),
+                                    ),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 8,
+                                        vertical: 2,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: theme.activeColor
+                                            .withValues(alpha: 0.12),
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                      child: Text(
+                                        theme.formatNumber(subs.length),
+                                        style: theme.textStyle(
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.bold,
+                                          color: theme.activeColor,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 10),
+                                ListView.separated(
+                                  shrinkWrap: true,
+                                  physics: const NeverScrollableScrollPhysics(),
+                                  itemCount: subs.length,
+                                  separatorBuilder: (_, _) =>
+                                      const SizedBox(height: 8),
+                                  itemBuilder: (context, index) {
+                                    final sub = subs[index];
+                                    final subStatsAsync = ref
+                                        .watch(locationsRepositoryProvider)
+                                        .watchLocationStockStats(sub.id);
+
+                                    return Container(
+                                      decoration: BoxDecoration(
+                                        color: theme.secondaryColor,
+                                        borderRadius: BorderRadius.circular(14),
+                                        border: Border.all(
+                                          color: theme.borderColor,
+                                          width: 1,
+                                        ),
+                                      ),
+                                      child: Material(
+                                        color: Colors.transparent,
+                                        borderRadius: BorderRadius.circular(14),
+                                        child: InkWell(
+                                          onTap: () => context
+                                              .push('/location/${sub.id}'),
+                                          borderRadius:
+                                              BorderRadius.circular(14),
+                                          child: Padding(
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 14,
+                                              vertical: 12,
+                                            ),
+                                            child: Row(
+                                              children: [
+                                                Icon(
+                                                  Icons
+                                                      .subdirectory_arrow_right_rounded,
+                                                  color: theme.activeColor,
+                                                  size: 18,
+                                                ),
+                                                const SizedBox(width: 10),
+                                                Expanded(
+                                                  child: Column(
+                                                    crossAxisAlignment:
+                                                        CrossAxisAlignment
+                                                            .start,
+                                                    children: [
+                                                      Text(
+                                                        sub.name,
+                                                        style: theme.textStyle(
+                                                          fontSize: 14,
+                                                          fontWeight:
+                                                              FontWeight.bold,
+                                                          color:
+                                                              theme.textColor,
+                                                        ),
+                                                      ),
+                                                      if (sub.code != null) ...[
+                                                        const SizedBox(
+                                                          height: 2,
+                                                        ),
+                                                        Text(
+                                                          sub.code!,
+                                                          style: theme.textStyle(
+                                                            fontSize: 11,
+                                                            color: theme
+                                                                .subTextColor,
+                                                          ),
+                                                        ),
+                                                      ],
+                                                    ],
+                                                  ),
+                                                ),
+                                                StreamBuilder<
+                                                  LocationStockStats
+                                                >(
+                                                  stream: subStatsAsync,
+                                                  builder: (context, snap) {
+                                                    final u =
+                                                        snap.data?.totalUnits ??
+                                                        0;
+                                                    if (u == 0) {
+                                                      return Text(
+                                                        theme.translate(
+                                                          'empty_location',
+                                                        ),
+                                                        style: theme.textStyle(
+                                                          fontSize: 12,
+                                                          color:
+                                                              theme.subTextColor,
+                                                        ),
+                                                      );
+                                                    }
+                                                    return Container(
+                                                      padding:
+                                                          const EdgeInsets
+                                                              .symmetric(
+                                                            horizontal: 8,
+                                                            vertical: 3,
+                                                          ),
+                                                      decoration: BoxDecoration(
+                                                        color: theme.activeColor
+                                                            .withValues(
+                                                              alpha: 0.12,
+                                                            ),
+                                                        borderRadius:
+                                                            BorderRadius
+                                                                .circular(8),
+                                                      ),
+                                                      child: Text(
+                                                        '${theme.formatNumber(u)} pcs',
+                                                        style: theme.textStyle(
+                                                          fontSize: 12,
+                                                          fontWeight:
+                                                              FontWeight.bold,
+                                                          color:
+                                                              theme.activeColor,
+                                                        ),
+                                                      ),
+                                                    );
+                                                  },
+                                                ),
+                                                const SizedBox(width: 6),
+                                                Icon(
+                                                  Icons.chevron_right_rounded,
+                                                  size: 18,
+                                                  color: theme.subTextColor,
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    );
+                                  },
                                 ),
                               ],
                             );
@@ -397,20 +670,38 @@ class LocationDetailScreen extends ConsumerWidget {
                                           vertical: 12,
                                         ),
                                         child: Row(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.center,
                                           children: [
                                             Container(
-                                              width: 38,
-                                              height: 38,
+                                              width: 40,
+                                              height: 40,
                                               decoration: BoxDecoration(
-                                                color: theme.activeColor
-                                                    .withValues(alpha: 0.12),
+                                                color: CategoryColors
+                                                    .getContainerColor(
+                                                  comp.category,
+                                                  isDark: theme.isDark,
+                                                ),
                                                 borderRadius:
                                                     BorderRadius.circular(10),
+                                                border: Border.all(
+                                                  color: CategoryColors
+                                                      .getBorderColor(
+                                                    comp.category,
+                                                    isDark: theme.isDark,
+                                                  ),
+                                                  width: 1,
+                                                ),
                                               ),
                                               alignment: Alignment.center,
                                               child: Icon(
-                                                Icons.memory_rounded,
-                                                color: theme.activeColor,
+                                                CategoryColors.getCategoryIcon(
+                                                    comp.category),
+                                                color: CategoryColors
+                                                    .getForegroundColor(
+                                                  comp.category,
+                                                  isDark: theme.isDark,
+                                                ),
                                                 size: 20,
                                               ),
                                             ),
@@ -419,24 +710,58 @@ class LocationDetailScreen extends ConsumerWidget {
                                               child: Column(
                                                 crossAxisAlignment:
                                                     CrossAxisAlignment.start,
+                                                mainAxisSize:
+                                                    MainAxisSize.min,
                                                 children: [
-                                                  Text(
-                                                    comp.name,
-                                                    style: theme.textStyle(
-                                                      fontSize: 14,
-                                                      fontWeight:
-                                                          FontWeight.bold,
-                                                      color: theme.textColor,
-                                                    ),
+                                                  CategoryColors
+                                                      .buildTitleRichText(
+                                                    name: comp.name,
+                                                    category: comp.category,
+                                                    textColor: theme.textColor,
+                                                    subTextColor:
+                                                        theme.subTextColor,
+                                                    fontSize: 14,
+                                                    isPersian:
+                                                        theme.currentLanguage ==
+                                                            'Persian',
                                                   ),
-                                                  const SizedBox(height: 2),
-                                                  Text(
-                                                    '${comp.category}${comp.packageFootprint != null ? ' • ${comp.packageFootprint}' : ''}',
-                                                    style: theme.textStyle(
-                                                      fontSize: 12,
-                                                      color: theme.subTextColor,
+                                                  if (comp.packageFootprint !=
+                                                          null &&
+                                                      comp.packageFootprint!
+                                                          .trim()
+                                                          .isNotEmpty) ...[
+                                                    const SizedBox(height: 3),
+                                                    Text(
+                                                      comp.packageFootprint!,
+                                                      maxLines: 1,
+                                                      overflow:
+                                                          TextOverflow.ellipsis,
+                                                      style: theme.textStyle(
+                                                        fontSize: 11.5,
+                                                        fontWeight:
+                                                            FontWeight.w500,
+                                                        color:
+                                                            theme.subTextColor,
+                                                      ),
                                                     ),
-                                                  ),
+                                                  ] else if (comp.description !=
+                                                          null &&
+                                                      comp.description!
+                                                          .trim()
+                                                          .isNotEmpty) ...[
+                                                    const SizedBox(height: 3),
+                                                    Text(
+                                                      comp.description!,
+                                                      maxLines: 1,
+                                                      overflow:
+                                                          TextOverflow.ellipsis,
+                                                      style: theme.textStyle(
+                                                        fontSize: 11.5,
+                                                        color:
+                                                            theme.subTextColor,
+                                                      ),
+                                                    ),
+                                                  ],
                                                 ],
                                               ),
                                             ),

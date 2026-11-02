@@ -6,6 +6,7 @@ import '../../../app/theme/app_spacing.dart';
 import '../../../core/database/database.dart';
 import '../../../core/formatting/currency_formatter.dart';
 import '../../../core/formatting/date_formatter.dart';
+import '../../../core/theme/category_colors.dart';
 import '../../../core/theme/theme_provider.dart';
 import '../../../core/utils/app_snackbar.dart';
 import '../../../core/widgets/pp_badge.dart';
@@ -268,13 +269,31 @@ class _ComponentDetailScreenState extends ConsumerState<ComponentDetailScreen>
                                       ),
                                   ],
                                 ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  '${component.category}${component.manufacturer != null ? ' • ${component.manufacturer}' : ''}${component.manufacturerPartNumber != null ? ' • ${component.manufacturerPartNumber}' : ''}',
-                                  style: theme.textStyle(
-                                    fontSize: 12,
-                                    color: textSec,
-                                  ),
+                                const SizedBox(height: 6),
+                                Row(
+                                  children: [
+                                    CategoryColors.buildBadge(
+                                      component.category,
+                                      isDark: theme.isDark,
+                                      fontSize: 11,
+                                    ),
+                                    if (component.manufacturer != null ||
+                                        component.manufacturerPartNumber !=
+                                            null) ...[
+                                      const SizedBox(width: 8),
+                                      Expanded(
+                                        child: Text(
+                                          '${component.manufacturer ?? ''}${component.manufacturer != null && component.manufacturerPartNumber != null ? ' • ' : ''}${component.manufacturerPartNumber ?? ''}',
+                                          style: theme.textStyle(
+                                            fontSize: 12,
+                                            color: textSec,
+                                          ),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ),
+                                    ],
+                                  ],
                                 ),
                                 const SizedBox(height: AppSpacing.md),
 

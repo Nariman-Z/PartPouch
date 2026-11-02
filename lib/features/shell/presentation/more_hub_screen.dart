@@ -38,7 +38,7 @@ class MoreHubScreen extends StatelessWidget {
               ),
               _HubTile(
                 icon: Icons.local_shipping_outlined,
-                iconColor: theme.activeColor,
+                iconColor: const Color(0xFFF97316),
                 title: theme.translate('purchase_orders'),
                 subtitle: theme.translate('purchase_orders_desc'),
                 onTap: () => context.push('/purchasing'),
@@ -102,7 +102,7 @@ class MoreHubScreen extends StatelessWidget {
               ),
               _HubTile(
                 icon: Icons.qr_code_scanner_rounded,
-                iconColor: theme.activeColor,
+                iconColor: const Color(0xFF10B981),
                 title: theme.translate('scan_qr_barcode'),
                 subtitle: theme.translate('scan_qr_desc'),
                 onTap: () => context.push('/scan'),

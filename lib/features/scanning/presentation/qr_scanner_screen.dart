@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -13,7 +14,7 @@ import '../../inventory/data/inventory_repository.dart';
 
 /// Ambinet-style high-performance QR and Barcode scanner for PartPouch.
 /// Features a dark vignette overlay, smooth corner brackets, animated laser line,
-/// circular quick controls (close, torch, flip camera), and seamless part lookup.
+/// circular quick controls (close, torch, browse media / gallery), and seamless part lookup.
 class QrScannerScreen extends ConsumerStatefulWidget {
   const QrScannerScreen({super.key});
 
@@ -143,9 +144,59 @@ class _QrScannerScreenState extends ConsumerState<QrScannerScreen>
     setState(() => _flashOn = !_flashOn);
   }
 
-  Future<void> _switchCamera() async {
+  Future<void> _pickImageFromGallery() async {
     HapticFeedback.selectionClick();
-    await _controller.switchCamera();
+    final theme = ThemeProvider();
+
+    try {
+      final files = await FilePicker.pickFiles(
+        type: FileType.image,
+      );
+
+      if (files.isEmpty) return;
+
+      final path = files.first.xFile.path;
+      if (path.isEmpty) return;
+
+      setState(() => _isProcessing = true);
+
+      // Analyze image file using MobileScannerController
+      final capture = await _controller.analyzeImage(path);
+      final raw = capture?.barcodes.firstOrNull?.rawValue?.trim();
+
+      if (raw != null && raw.isNotEmpty) {
+        HapticFeedback.mediumImpact();
+        await _processPayload(raw);
+      } else {
+        HapticFeedback.heavyImpact();
+        if (mounted) {
+          setState(() {
+            _errorText = theme.translate('no_qr_found_in_image');
+            _isProcessing = false;
+          });
+
+          Future.delayed(const Duration(milliseconds: 2500), () {
+            if (mounted) {
+              setState(() => _errorText = null);
+            }
+          });
+        }
+      }
+    } catch (e) {
+      debugPrint('Error analyzing image from gallery: $e');
+      if (mounted) {
+        setState(() {
+          _errorText = theme.translate('error_scanning_image');
+          _isProcessing = false;
+        });
+
+        Future.delayed(const Duration(milliseconds: 2500), () {
+          if (mounted) {
+            setState(() => _errorText = null);
+          }
+        });
+      }
+    }
   }
 
   @override
@@ -333,7 +384,7 @@ class _QrScannerScreenState extends ConsumerState<QrScannerScreen>
           // 4. Sweeping Laser Scan Line
           _buildScanLine(theme.activeColor),
 
-          // 5. Floating Top Action Controls (Close, Torch, Camera Flip)
+          // 5. Floating Top Action Controls (Close, Torch, Browse Media / Gallery)
           Positioned(
             top: topPadding + 14,
             left: 20,
@@ -343,6 +394,7 @@ class _QrScannerScreenState extends ConsumerState<QrScannerScreen>
               children: [
                 _circleButton(
                   icon: Icons.close_rounded,
+                  tooltip: theme.translate('cancel'),
                   onTap: () => Navigator.of(context).pop(),
                 ),
                 Row(
@@ -352,12 +404,14 @@ class _QrScannerScreenState extends ConsumerState<QrScannerScreen>
                           ? Icons.flash_on_rounded
                           : Icons.flash_off_rounded,
                       iconColor: _flashOn ? theme.activeColor : Colors.white,
+                      tooltip: _flashOn ? 'Turn off flash' : 'Turn on flash',
                       onTap: _toggleFlash,
                     ),
                     const SizedBox(width: 12),
                     _circleButton(
-                      icon: Icons.flip_camera_ios_rounded,
-                      onTap: _switchCamera,
+                      icon: Icons.photo_library_rounded,
+                      tooltip: theme.translate('browse_media'),
+                      onTap: _pickImageFromGallery,
                     ),
                   ],
                 ),
@@ -450,6 +504,60 @@ class _QrScannerScreenState extends ConsumerState<QrScannerScreen>
               ],
             ),
           ),
+
+          // 7. Processing indicator for gallery scanning
+          if (_isProcessing && _errorText == null)
+            Positioned.fill(
+              child: Container(
+                color: Colors.black54,
+                child: Center(
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 24,
+                      vertical: 16,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withValues(alpha: 0.85),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: Colors.white.withValues(alpha: 0.18),
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.5),
+                          blurRadius: 16,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2.5,
+                            color: theme.activeColor,
+                          ),
+                        ),
+                        const SizedBox(width: 14),
+                        Text(
+                          theme.currentLanguage == 'Persian'
+                              ? 'در حال اسکن کد...'
+                              : 'Scanning code...',
+                          style: theme.textStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
         ],
       ),
     );
@@ -517,8 +625,9 @@ class _QrScannerScreenState extends ConsumerState<QrScannerScreen>
     required IconData icon,
     required VoidCallback onTap,
     Color iconColor = Colors.white,
+    String? tooltip,
   }) {
-    return Material(
+    final button = Material(
       color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
@@ -538,6 +647,11 @@ class _QrScannerScreenState extends ConsumerState<QrScannerScreen>
         ),
       ),
     );
+
+    if (tooltip != null) {
+      return Tooltip(message: tooltip, child: button);
+    }
+    return button;
   }
 }
 

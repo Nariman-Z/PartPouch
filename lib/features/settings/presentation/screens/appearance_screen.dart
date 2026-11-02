@@ -100,7 +100,7 @@ class _AppearanceScreenState extends State<AppearanceScreen> {
                   children: [
                     _buildLanguageTile(
                       label: 'English',
-                      subtitle: 'US / International',
+                      subtitle: 'US',
                       isSelected: theme.currentLanguage == 'English',
                       onTap: () {
                         HapticFeedback.selectionClick();

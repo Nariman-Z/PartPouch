@@ -43,30 +43,42 @@ class _PpButtonState extends State<PpButton> {
     final (Color bg, Color fg, BorderSide border, List<BoxShadow> shadows, Gradient? gradient) =
         _getStyling(theme);
 
-    final content = Row(
-      mainAxisSize: widget.fullWidth ? MainAxisSize.max : MainAxisSize.min,
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        if (widget.isLoading) ...[
-          SizedBox(
-            width: 18,
-            height: 18,
-            child: CircularProgressIndicator(strokeWidth: 2, color: fg),
-          ),
-          const SizedBox(width: 8),
-        ] else if (widget.icon != null) ...[
-          Icon(widget.icon, size: 19, color: fg),
-          const SizedBox(width: 8),
-        ],
-        Text(
-          widget.label,
-          style: theme.textStyle(
-            fontSize: 14.5,
-            fontWeight: FontWeight.w700,
-            color: fg,
-          ),
-        ),
-      ],
+    final textWidget = Text(
+      widget.label,
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
+      style: theme.textStyle(
+        fontSize: 14.5,
+        fontWeight: FontWeight.w700,
+        color: fg,
+      ),
+    );
+
+    final content = LayoutBuilder(
+      builder: (context, constraints) {
+        final canFlex = constraints.hasBoundedWidth;
+        return Row(
+          mainAxisSize: widget.fullWidth ? MainAxisSize.max : MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            if (widget.isLoading) ...[
+              SizedBox(
+                width: 18,
+                height: 18,
+                child: CircularProgressIndicator(strokeWidth: 2, color: fg),
+              ),
+              const SizedBox(width: 8),
+            ] else if (widget.icon != null) ...[
+              Icon(widget.icon, size: 19, color: fg),
+              const SizedBox(width: 8),
+            ],
+            if (canFlex)
+              Flexible(child: textWidget)
+            else
+              textWidget,
+          ],
+        );
+      },
     );
 
     return AnimatedScale(
@@ -98,7 +110,7 @@ class _PpButtonState extends State<PpButton> {
             splashColor: fg.withValues(alpha: 0.16),
             highlightColor: fg.withValues(alpha: 0.08),
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 18),
+              padding: const EdgeInsets.symmetric(horizontal: 14),
               child: content,
             ),
           ),

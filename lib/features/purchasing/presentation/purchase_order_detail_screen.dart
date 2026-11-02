@@ -5,6 +5,7 @@ import '../../../app/theme/app_spacing.dart';
 import '../../../core/database/database.dart';
 import '../../../core/formatting/currency_formatter.dart';
 import '../../../core/formatting/date_formatter.dart';
+import '../../../core/theme/category_colors.dart';
 import '../../../core/theme/theme_provider.dart';
 import '../../../core/utils/app_snackbar.dart';
 import '../../../core/widgets/pp_badge.dart';
@@ -98,6 +99,28 @@ class PurchaseOrderDetailScreen extends ConsumerWidget {
                   icon: Icon(Icons.arrow_back_rounded, color: theme.textColor),
                   onPressed: () => Navigator.pop(context),
                 ),
+                actions: [
+                  if (po.status != 'cancelled' && po.status != 'received')
+                    TextButton.icon(
+                      icon: const Icon(
+                        Icons.cancel_outlined,
+                        size: 16,
+                        color: AppColors.error,
+                      ),
+                      label: Text(
+                        theme.currentLanguage == 'Persian'
+                            ? 'لغو سفارش'
+                            : 'Cancel Order',
+                        style: theme.textStyle(
+                          fontSize: 12,
+                          color: AppColors.error,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      onPressed: () =>
+                          _confirmCancelOrder(context, ref, po.id, theme),
+                    ),
+                ],
               ),
               body: ListView(
                 padding: const EdgeInsets.all(16),
@@ -126,9 +149,11 @@ class PurchaseOrderDetailScreen extends ConsumerWidget {
                               label: _getLocalizedStatus(po.status, theme),
                               variant: po.status == 'received'
                                   ? BadgeVariant.success
-                                  : (po.status == 'ordered'
-                                        ? BadgeVariant.primary
-                                        : BadgeVariant.warning),
+                                  : (po.status == 'cancelled'
+                                      ? BadgeVariant.error
+                                      : (po.status == 'partiallyReceived'
+                                          ? BadgeVariant.warning
+                                          : BadgeVariant.neutral)),
                             ),
                           ],
                         ),
@@ -210,69 +235,98 @@ class PurchaseOrderDetailScreen extends ConsumerWidget {
                         ),
                         backgroundColor: theme.secondaryColor,
                         borderColor: theme.borderColor,
-                        child: Row(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Container(
-                              padding: const EdgeInsets.all(8),
-                              decoration: BoxDecoration(
-                                color: theme.activeColor.withValues(alpha: 0.15),
-                                borderRadius: AppSpacing.roundedSm,
-                              ),
-                              child: Icon(
-                                Icons.memory_rounded,
-                                color: theme.activeColor,
-                                size: 20,
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    comp.name,
-                                    style: theme.textStyle(
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w600,
-                                      color: theme.textColor,
+                            Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.all(8),
+                                  decoration: BoxDecoration(
+                                    color: CategoryColors.getContainerColor(
+                                      comp.category,
+                                      isDark: theme.isDark,
+                                    ),
+                                    borderRadius: AppSpacing.roundedSm,
+                                    border: Border.all(
+                                      color: CategoryColors.getBorderColor(
+                                        comp.category,
+                                        isDark: theme.isDark,
+                                      ),
+                                      width: 1,
                                     ),
                                   ),
-                                  const SizedBox(height: 2),
-                                  Text(
-                                    '${comp.category} • ${theme.translate('unit_cost')}: ${CurrencyFormatter.formatCents(item.unitCostCents)}',
-                                    style: theme.textStyle(fontSize: 12, color: theme.subTextColor),
-                                  ),
-                                  const SizedBox(height: 2),
-                                  Text(
-                                    '${theme.translate('counted')}: ${theme.formatNumber(item.receivedQuantity)} / ${theme.formatNumber(item.orderedQuantity)} ${comp.unitOfMeasure}',
-                                    style: theme.textStyle(
-                                      fontSize: 11,
-                                      color: itemDetail.isFullyReceived
-                                          ? AppColors.success
-                                          : theme.subTextColor,
-                                      fontWeight: FontWeight.w600,
+                                  child: Icon(
+                                    CategoryColors.getCategoryIcon(comp.category),
+                                    color: CategoryColors.getForegroundColor(
+                                      comp.category,
+                                      isDark: theme.isDark,
                                     ),
+                                    size: 20,
                                   ),
-                                ],
-                              ),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      CategoryColors.buildTitleRichText(
+                                        name: comp.name,
+                                        category: comp.category,
+                                        textColor: theme.textColor,
+                                        subTextColor: theme.subTextColor,
+                                        fontSize: 14,
+                                        isPersian:
+                                            theme.currentLanguage == 'Persian',
+                                      ),
+                                      const SizedBox(height: 3),
+                                      Text(
+                                        '${comp.packageFootprint != null && comp.packageFootprint!.trim().isNotEmpty ? '${comp.packageFootprint!} • ' : ''}${theme.translate('unit_cost')}: ${CurrencyFormatter.formatCents(item.unitCostCents)}',
+                                        maxLines: 2,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: theme.textStyle(
+                                          fontSize: 11.5,
+                                          fontWeight: FontWeight.w500,
+                                          color: theme.subTextColor,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 2),
+                                      Text(
+                                        '${theme.translate('counted')}: ${theme.formatNumber(item.receivedQuantity)} / ${theme.formatNumber(item.orderedQuantity)} ${comp.unitOfMeasure}',
+                                        style: theme.textStyle(
+                                          fontSize: 11,
+                                          color: itemDetail.isFullyReceived
+                                              ? AppColors.success
+                                              : theme.subTextColor,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                if (itemDetail.isFullyReceived)
+                                  PpBadge(
+                                    label: theme.translate('done'),
+                                    variant: BadgeVariant.success,
+                                    icon: Icons.check,
+                                  ),
+                              ],
                             ),
                             if (!itemDetail.isFullyReceived &&
                                 po.status != 'cancelled') ...[
+                              const SizedBox(height: 10),
                               PpButton(
                                 label: theme.translate('receive_items'),
-                                height: 36,
-                                fullWidth: false,
+                                height: 38,
+                                fullWidth: true,
+                                icon: Icons.input_rounded,
                                 onPressed: () => _showReceiveItemDialog(
                                   context,
                                   ref,
                                   itemDetail,
                                 ),
-                              ),
-                            ] else if (itemDetail.isFullyReceived) ...[
-                              PpBadge(
-                                label: theme.translate('done'),
-                                variant: BadgeVariant.success,
-                                icon: Icons.check,
                               ),
                             ],
                           ],
@@ -289,17 +343,89 @@ class PurchaseOrderDetailScreen extends ConsumerWidget {
     );
   }
 
+  Future<void> _confirmCancelOrder(
+    BuildContext context,
+    WidgetRef ref,
+    String orderId,
+    ThemeProvider theme,
+  ) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: theme.secondaryColor,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Text(
+          theme.currentLanguage == 'Persian'
+              ? 'لغو سفارش خرید'
+              : 'Cancel Purchase Order',
+          style: theme.textStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+            color: theme.textColor,
+          ),
+        ),
+        content: Text(
+          theme.currentLanguage == 'Persian'
+              ? 'آیا از لغو این سفارش خرید اطمینان دارید؟'
+              : 'Are you sure you want to cancel this purchase order?',
+          style: theme.textStyle(fontSize: 13, color: theme.subTextColor),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text(
+              theme.translate('cancel'),
+              style: theme.textStyle(color: theme.subTextColor),
+            ),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.error,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text(
+              theme.currentLanguage == 'Persian' ? 'لغو سفارش' : 'Cancel Order',
+              style: theme.textStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true && context.mounted) {
+      await ref
+          .read(purchasingRepositoryProvider)
+          .updateOrderStatus(orderId, 'cancelled');
+      if (context.mounted) {
+        AppSnackBar.show(
+          context,
+          message: theme.currentLanguage == 'Persian'
+              ? 'سفارش خرید لغو شد'
+              : 'Purchase order cancelled',
+          type: SnackBarType.info,
+        );
+      }
+    }
+  }
+
   String _getLocalizedStatus(String status, ThemeProvider theme) {
     switch (status) {
       case 'ordered':
-        return theme.translate('ordered');
+      case 'draft':
+        return theme.translate('draft');
       case 'partiallyReceived':
         return theme.translate('partially_received');
       case 'received':
         return theme.translate('received');
       case 'cancelled':
         return theme.translate('cancelled');
-      case 'draft':
       default:
         return theme.translate('draft');
     }

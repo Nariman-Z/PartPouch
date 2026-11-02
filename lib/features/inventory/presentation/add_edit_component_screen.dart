@@ -17,15 +17,20 @@ const List<String> kCommonCategories = [
   'Microcontroller',
   'Resistors',
   'Capacitors',
+  'Inductors',
   'ICs & Semiconductors',
   'Sensors',
   'Diodes',
   'Transistors',
+  'Optoelectronics',
+  'Displays',
+  'Power & Regulators',
   'Modules & Shields',
   'Connectors',
-  'Optoelectronics',
-  'Power & Regulators',
+  'Switches & Relays',
+  'Audio & Sound',
   'Hardware & Misc',
+  'Other',
 ];
 
 class AddEditComponentScreen extends ConsumerStatefulWidget {

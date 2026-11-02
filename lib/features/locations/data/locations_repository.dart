@@ -240,6 +240,61 @@ class LocationsRepository {
     });
   }
 
+  /// Watches aggregated direct stock stats for all locations in a single reactive stream
+  Stream<Map<String, LocationStockStats>> watchAllLocationStockStats() {
+    final query = _db.select(_db.inventoryBalances).join([
+      innerJoin(
+        _db.components,
+        _db.components.id.equalsExp(_db.inventoryBalances.componentId),
+      ),
+    ])..where(_db.inventoryBalances.quantity.isBiggerThanValue(0));
+
+    return query.watch().map((rows) {
+      final Map<String, int> counts = {};
+      final Map<String, int> units = {};
+      final Map<String, int> values = {};
+
+      for (final row in rows) {
+        final balance = row.readTable(_db.inventoryBalances);
+        final component = row.readTable(_db.components);
+        final locId = balance.locationId;
+        counts[locId] = (counts[locId] ?? 0) + 1;
+        units[locId] = (units[locId] ?? 0) + balance.quantity;
+        if (component.unitCostCents != null) {
+          values[locId] =
+              (values[locId] ?? 0) +
+              (balance.quantity * component.unitCostCents!);
+        }
+      }
+
+      final Map<String, LocationStockStats> result = {};
+      for (final locId in units.keys) {
+        result[locId] = LocationStockStats(
+          componentCount: counts[locId] ?? 0,
+          totalUnits: units[locId] ?? 0,
+          totalValueCents: values[locId] ?? 0,
+        );
+      }
+      return result;
+    });
+  }
+
+  /// Watches immediate sub-locations for a given parent
+  Stream<List<Location>> watchSubLocations(String parentId) {
+    return (_db.select(_db.locations)
+          ..where(
+            (tbl) => tbl.parentId.equals(parentId) & tbl.archivedAt.isNull(),
+          )
+          ..orderBy([(tbl) => OrderingTerm.asc(tbl.name)]))
+        .watch();
+  }
+
+  /// Watches the direct parent location for breadcrumb and context
+  Stream<Location?> watchParentLocation(String? parentId) {
+    if (parentId == null) return Stream.value(null);
+    return watchLocationById(parentId);
+  }
+
   Stream<List<LocationComponentItem>> watchComponentsInLocation(
     String locationId,
   ) {

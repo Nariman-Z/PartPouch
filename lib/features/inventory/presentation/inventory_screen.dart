@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../../app/theme/app_colors.dart';
 import '../../../app/theme/app_spacing.dart';
 import '../../../core/formatting/currency_formatter.dart';
+import '../../../core/theme/category_colors.dart';
 import '../../../core/theme/theme_provider.dart';
 import '../../../core/widgets/pp_badge.dart';
 import '../../../core/widgets/pp_card.dart';
@@ -196,59 +197,61 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
                   if (categories.isEmpty) return const SizedBox.shrink();
 
                   return SizedBox(
-                    height: 36,
+                    height: 34,
                     child: ListView.separated(
                       scrollDirection: Axis.horizontal,
                       padding: const EdgeInsets.symmetric(horizontal: 16),
                       itemCount: categories.length + 1,
                       separatorBuilder: (_, _) => const SizedBox(width: 6),
                       itemBuilder: (context, index) {
-                        if (index == 0) {
-                          final isSelected = _selectedCategory == null;
-                          return ChoiceChip(
-                            label: Text(theme.translate('all_categories')),
-                            selected: isSelected,
-                            onSelected: (_) =>
-                                setState(() => _selectedCategory = null),
-                            selectedColor: theme.activeColor.withValues(alpha: 0.15),
-                            backgroundColor: theme.secondaryColor,
-                            side: BorderSide(
-                              color: isSelected
-                                  ? theme.activeColor
-                                  : theme.borderColor,
-                            ),
-                            labelStyle: theme.textStyle(
-                              fontSize: 11,
-                              color: isSelected
-                                  ? theme.activeColor
-                                  : theme.subTextColor,
-                              fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                            ),
-                          );
-                        }
+                        final isAll = index == 0;
+                        final cat = isAll ? null : categories[index - 1];
+                        final isSelected = isAll
+                            ? _selectedCategory == null
+                            : _selectedCategory == cat;
+                        final label =
+                            isAll ? theme.translate('all_categories') : cat!;
 
-                        final cat = categories[index - 1];
-                        final isSelected = _selectedCategory == cat;
-
-                        return ChoiceChip(
-                          label: Text(cat),
-                          selected: isSelected,
-                          onSelected: (_) => setState(
-                            () => _selectedCategory = isSelected ? null : cat,
-                          ),
-                          selectedColor: theme.activeColor.withValues(alpha: 0.15),
-                          backgroundColor: theme.secondaryColor,
-                          side: BorderSide(
-                            color: isSelected
-                                ? theme.activeColor
-                                : theme.borderColor,
-                          ),
-                          labelStyle: theme.textStyle(
-                            fontSize: 11,
-                            color: isSelected
-                                ? theme.activeColor
-                                : theme.subTextColor,
-                            fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                        return GestureDetector(
+                          onTap: () {
+                            setState(() {
+                              if (isAll) {
+                                _selectedCategory = null;
+                              } else {
+                                _selectedCategory = isSelected ? null : cat;
+                              }
+                            });
+                          },
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 14,
+                              vertical: 6,
+                            ),
+                            alignment: Alignment.center,
+                            decoration: BoxDecoration(
+                              color: isSelected
+                                  ? theme.activeColor.withValues(alpha: 0.15)
+                                  : theme.secondaryColor,
+                              borderRadius: AppSpacing.roundedSm,
+                              border: Border.all(
+                                color: isSelected
+                                    ? theme.activeColor
+                                    : theme.borderColor,
+                                width: 1,
+                              ),
+                            ),
+                            child: Text(
+                              label,
+                              style: theme.textStyle(
+                                fontSize: 11,
+                                color: isSelected
+                                    ? theme.activeColor
+                                    : theme.subTextColor,
+                                fontWeight: isSelected
+                                    ? FontWeight.w700
+                                    : FontWeight.w500,
+                              ),
+                            ),
                           ),
                         );
                       },
@@ -256,7 +259,7 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
                   );
                 },
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 12),
 
               // Component List Stream
               Expanded(
@@ -322,7 +325,7 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
       child: GestureDetector(
         onTap: () => setState(() => _selectedStockFilter = filterKey),
         child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 6),
+          padding: const EdgeInsets.symmetric(vertical: 7),
           decoration: BoxDecoration(
             color: isSelected
                 ? theme.activeColor.withValues(alpha: 0.15)
@@ -339,7 +342,7 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: theme.textStyle(
-              fontSize: 10,
+              fontSize: 11,
               color: isSelected ? theme.activeColor : theme.subTextColor,
               fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
             ),
@@ -368,21 +371,27 @@ class _ComponentListItem extends StatelessWidget {
       backgroundColor: theme.secondaryColor,
       borderColor: theme.borderColor,
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          // Component Icon
+          // Component Icon with Category Color
           Container(
             width: 44,
             height: 44,
             decoration: BoxDecoration(
-              color: theme.activeColor.withValues(alpha: 0.12),
+              color: CategoryColors.getContainerColor(comp.category,
+                  isDark: theme.isDark),
               borderRadius: AppSpacing.roundedSm,
-              border: Border.all(color: theme.borderColor, width: 1),
+              border: Border.all(
+                color: CategoryColors.getBorderColor(comp.category,
+                    isDark: theme.isDark),
+                width: 1,
+              ),
             ),
             alignment: Alignment.center,
             child: Icon(
               _getCategoryIcon(comp.category),
-              color: theme.activeColor,
+              color: CategoryColors.getForegroundColor(comp.category,
+                  isDark: theme.isDark),
               size: 22,
             ),
           ),
@@ -392,16 +401,21 @@ class _ComponentListItem extends StatelessWidget {
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
               children: [
                 Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     Expanded(
                       child: Text(
-                        comp.name,
+                        comp.category,
                         style: theme.textStyle(
                           fontSize: 14,
-                          fontWeight: FontWeight.w700,
-                          color: theme.textColor,
+                          fontWeight: FontWeight.bold,
+                          color: CategoryColors.getForegroundColor(
+                            comp.category,
+                            isDark: theme.isDark,
+                          ),
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -411,42 +425,76 @@ class _ComponentListItem extends StatelessWidget {
                     PpBadge(label: badgeText, variant: badgeVariant),
                   ],
                 ),
-                const SizedBox(height: 2),
+                const SizedBox(height: 3),
                 Text(
-                  '${comp.category}${comp.packageFootprint != null ? ' • ${comp.packageFootprint}' : ''}',
+                  comp.name,
                   style: theme.textStyle(
-                    fontSize: 12,
-                    color: theme.subTextColor,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
+                    color: theme.textColor,
+                    height: 1.25,
                   ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
                 ),
-                const SizedBox(height: 6),
+                if (comp.description != null &&
+                    comp.description!.trim().isNotEmpty &&
+                    comp.description!.trim() != comp.name.trim()) ...[
+                  const SizedBox(height: 2),
+                  Text(
+                    comp.description!,
+                    style: theme.textStyle(
+                      fontSize: 11.5,
+                      color: theme.subTextColor,
+                      height: 1.2,
+                    ),
+                  ),
+                ],
+                if (comp.packageFootprint != null &&
+                    comp.packageFootprint!.trim().isNotEmpty) ...[
+                  const SizedBox(height: 3),
+                  Text(
+                    comp.packageFootprint!,
+                    style: theme.textStyle(
+                      fontSize: 11.5,
+                      fontWeight: FontWeight.w400,
+                      color: theme.subTextColor,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+                const SizedBox(height: 5),
                 Row(
                   children: [
                     Text(
                       '${theme.formatNumber(item.totalStock)} ${comp.unitOfMeasure}',
                       style: theme.textStyle(
-                        fontSize: 13,
+                        fontSize: 12.5,
                         color: item.totalStock > 0
                             ? theme.textColor
                             : AppColors.error,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                    if (item.locationCount > 0) ...[
-                      Text(
-                        ' • ${theme.formatNumber(item.locationCount)} ${theme.currentLanguage == 'Persian' ? 'مکان' : (item.locationCount == 1 ? 'location' : 'locations')}',
-                        style: theme.textStyle(
-                          fontSize: 11,
-                          color: theme.subTextColor,
+                    if (item.locationDisplay.isNotEmpty) ...[
+                      Flexible(
+                        child: Text(
+                          ' • ${item.locationDisplay}',
+                          style: theme.textStyle(
+                            fontSize: 11,
+                            color: theme.subTextColor,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
                     ],
                     const Spacer(),
                     if (comp.unitCostCents != null)
                       Text(
-                        CurrencyFormatter.formatCents(comp.unitCostCents),
+                        CurrencyFormatter.formatCents(
+                          comp.unitCostCents,
+                          compact: true,
+                        ),
                         style: theme.textStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
@@ -478,23 +526,45 @@ class _ComponentListItem extends StatelessWidget {
     if (lower.contains('micro') ||
         lower.contains('mcu') ||
         lower.contains('esp') ||
-        lower.contains('cpu')) {
-      return Icons.developer_board;
+        lower.contains('cpu') ||
+        lower.contains('arduino') ||
+        lower.contains('stm32')) {
+      return Icons.developer_board_rounded;
     } else if (lower.contains('resistor')) {
-      return Icons.linear_scale;
+      return Icons.linear_scale_rounded;
+    } else if (lower.contains('display') ||
+        lower.contains('screen') ||
+        lower.contains('oled') ||
+        lower.contains('lcd') ||
+        lower.contains('tft')) {
+      return Icons.tv_rounded;
     } else if (lower.contains('cap')) {
-      return Icons.battery_charging_full;
-    } else if (lower.contains('diode') || lower.contains('led')) {
-      return Icons.lightbulb_outline;
+      return Icons.battery_charging_full_rounded;
+    } else if (lower.contains('inductor') || lower.contains('coil')) {
+      return Icons.waves_rounded;
+    } else if (lower.contains('diode') || lower.contains('rectifier')) {
+      return Icons.arrow_forward_rounded;
+    } else if (lower.contains('led') || lower.contains('opto')) {
+      return Icons.lightbulb_outline_rounded;
     } else if (lower.contains('sensor')) {
-      return Icons.sensors;
-    } else if (lower.contains('display')) {
-      return Icons.tv;
+      return Icons.sensors_rounded;
     } else if (lower.contains('transistor') || lower.contains('mosfet')) {
-      return Icons.schema;
-    } else if (lower.contains('connector') || lower.contains('header')) {
-      return Icons.cable;
+      return Icons.schema_rounded;
+    } else if (lower.contains('power') ||
+        lower.contains('regulator') ||
+        lower.contains('converter')) {
+      return Icons.bolt_rounded;
+    } else if (lower.contains('switch') || lower.contains('relay')) {
+      return Icons.toggle_on_rounded;
+    } else if (lower.contains('module') || lower.contains('shield')) {
+      return Icons.extension_rounded;
+    } else if (lower.contains('connector') ||
+        lower.contains('header') ||
+        lower.contains('terminal')) {
+      return Icons.cable_rounded;
+    } else if (lower.contains('hardware') || lower.contains('screw')) {
+      return Icons.build_rounded;
     }
-    return Icons.memory;
+    return Icons.memory_rounded;
   }
 }

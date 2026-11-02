@@ -1,5 +1,7 @@
+import 'dart:convert';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
@@ -86,93 +88,53 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     }
   }
 
-  void _showPasteImportDialog() {
+  Future<void> _pasteAndRestoreFromClipboard() async {
     final theme = ThemeProvider();
-    final textController = TextEditingController();
+    final clipData = await Clipboard.getData(Clipboard.kTextPlain);
+    final text = clipData?.text?.trim() ?? '';
+    if (text.isEmpty) {
+      if (mounted) {
+        AppSnackBar.show(
+          context,
+          message: theme.currentLanguage == 'Persian'
+              ? 'کلیپ‌بورد خالی است یا متن معتبری یافت نشد.'
+              : 'Clipboard is empty or contains no text.',
+          type: SnackBarType.info,
+        );
+      }
+      return;
+    }
 
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: theme.secondaryColor,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(24),
-          side: BorderSide(color: theme.borderColor),
-        ),
-        title: Text(
-          theme.translate('paste_backup_text'),
-          style: theme.textStyle(fontSize: 18, fontWeight: FontWeight.bold),
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              theme.currentLanguage == 'Persian'
-                  ? 'متن پشتیبان JSON پارت‌پوچ را در کادر زیر قرار دهید:'
-                  : 'Paste your raw PartPouch JSON backup text below:',
-              style: theme.textStyle(
-                fontSize: 13,
-                color: theme.subTextColor,
-              ),
-            ),
-            const SizedBox(height: 14),
-            PpTextField(
-              controller: textController,
-              hint: '{"app": "PartPouch", ...}',
-              maxLines: 6,
-            ),
-          ],
-        ),
-        actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-        actions: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.end,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: Text(
-                  theme.translate('cancel'),
-                  style: theme.textStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: theme.subTextColor,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 8),
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: theme.activeColor,
-                  foregroundColor: Colors.white,
-                  elevation: 0,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                onPressed: () {
-                  final text = textController.text.trim();
-                  Navigator.pop(context);
-                  if (text.isNotEmpty) {
-                    _confirmAndRestore(text);
-                  }
-                },
-                child: Text(
-                  theme.currentLanguage == 'Persian'
-                      ? 'بررسی و بازیابی'
-                      : 'Validate & Restore',
-                  style: theme.textStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
+    try {
+      final parsed = jsonDecode(text);
+      if (parsed is! Map ||
+          parsed['app'] != 'PartPouch' ||
+          parsed['version'] == null) {
+        if (mounted) {
+          AppSnackBar.show(
+            context,
+            message: theme.currentLanguage == 'Persian'
+                ? 'متن کلیپ‌بورد نسخه پشتیبان معتبر پارت‌پوچ نیست.'
+                : 'Clipboard content is not a valid PartPouch backup.',
+            type: SnackBarType.error,
+          );
+        }
+        return;
+      }
+    } catch (_) {
+      if (mounted) {
+        AppSnackBar.show(
+          context,
+          message: theme.currentLanguage == 'Persian'
+              ? 'محتوای کلیپ‌بورد قالب JSON معتبر ندارد.'
+              : 'Clipboard content is not valid JSON.',
+          type: SnackBarType.error,
+        );
+      }
+      return;
+    }
+
+    await _confirmAndRestore(text);
   }
 
   Future<void> _confirmAndRestore(String jsonContent) async {
@@ -200,8 +162,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
         actions: [
           Row(
-            mainAxisAlignment: MainAxisAlignment.end,
-            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               TextButton(
                 onPressed: () => Navigator.pop(context, false),
@@ -214,25 +174,28 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   ),
                 ),
               ),
-              const SizedBox(width: 8),
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.warning,
-                  foregroundColor: Colors.white,
-                  elevation: 0,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+              const SizedBox(width: 12),
+              Expanded(
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.warning,
+                    foregroundColor: Colors.white,
+                    elevation: 0,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                   ),
-                ),
-                onPressed: () => Navigator.pop(context, true),
-                child: Text(
-                  theme.currentLanguage == 'Persian'
-                      ? 'تأیید و بازیابی'
-                      : 'Confirm Restore',
-                  style: theme.textStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
+                  onPressed: () => Navigator.pop(context, true),
+                  child: Text(
+                    theme.currentLanguage == 'Persian'
+                        ? 'تأیید و بازیابی'
+                        : 'Confirm Restore',
+                    style: theme.textStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
                   ),
                 ),
               ),
@@ -271,7 +234,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     final theme = ThemeProvider();
     String selectedCurrency = theme.currency;
     final rateController = TextEditingController(
-      text: theme.usdToTomanRate.round().toString(),
+      text: theme.usdToTomanRate > 0
+          ? theme.usdToTomanRate.round().toString()
+          : '',
     );
 
     showDialog(
@@ -280,8 +245,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         builder: (context, setDialogState) {
           final isToman = selectedCurrency == 'TOMAN';
 
-          double parseRate() {
+          double? parseRate() {
             String raw = rateController.text.trim().toLowerCase();
+            if (raw.isEmpty) return null;
             const persian = ['۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹'];
             const english = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
             for (int i = 0; i < 10; i++) {
@@ -293,7 +259,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   double.tryParse(raw.substring(0, raw.length - 1)) ?? 0;
               return numPart * 1000;
             }
-            return double.tryParse(raw) ?? theme.usdToTomanRate;
+            return double.tryParse(raw);
           }
 
           final currentRate = parseRate();
@@ -437,9 +403,11 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                                 ),
                               ),
                               Text(
-                                theme.isRtl
-                                    ? '${theme.formatNumber(NumberFormat('#,##0').format(currentRate.round()))} تومان'
-                                    : '${NumberFormat('#,##0').format(currentRate.round())} Toman',
+                                currentRate != null && currentRate > 0
+                                    ? (theme.isRtl
+                                        ? '${theme.formatNumber(NumberFormat('#,##0').format(currentRate.round()))} تومان'
+                                        : '${NumberFormat('#,##0').format(currentRate.round())} Toman')
+                                    : (theme.isRtl ? 'ثبت نشده' : 'Not set'),
                                 style: theme.textStyle(
                                   fontSize: 13,
                                   fontWeight: FontWeight.bold,
@@ -460,9 +428,11 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                                 ),
                               ),
                               Text(
-                                theme.isRtl
-                                    ? '${theme.formatNumber(NumberFormat('#,##0').format((currentRate * 10).round()))} تومان'
-                                    : '${NumberFormat('#,##0').format((currentRate * 10).round())} Toman',
+                                currentRate != null && currentRate > 0
+                                    ? (theme.isRtl
+                                        ? '${theme.formatNumber(NumberFormat('#,##0').format((currentRate * 10).round()))} تومان'
+                                        : '${NumberFormat('#,##0').format((currentRate * 10).round())} Toman')
+                                    : (theme.isRtl ? 'ثبت نشده' : 'Not set'),
                                 style: theme.textStyle(
                                   fontSize: 13,
                                   fontWeight: FontWeight.bold,
@@ -481,8 +451,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
             actions: [
               Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   TextButton(
                     onPressed: () => Navigator.pop(dialogCtx),
@@ -495,39 +463,40 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       ),
                     ),
                   ),
-                  const SizedBox(width: 8),
-                  ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: theme.activeColor,
-                      foregroundColor: Colors.white,
-                      elevation: 0,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: theme.activeColor,
+                        foregroundColor: Colors.white,
+                        elevation: 0,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
                       ),
-                    ),
-                    onPressed: () async {
-                      Navigator.pop(dialogCtx);
-                      await theme.setCurrency(selectedCurrency);
-                      if (selectedCurrency == 'TOMAN') {
-                        final rate = parseRate();
-                        if (rate > 0) {
+                      onPressed: () async {
+                        Navigator.pop(dialogCtx);
+                        await theme.setCurrency(selectedCurrency);
+                        if (selectedCurrency == 'TOMAN') {
+                          final rate = parseRate();
                           await theme.setUsdToTomanRate(rate);
                         }
-                      }
-                      if (mounted) {
-                        AppSnackBar.show(
-                          this.context,
-                          message: theme.translate('currency_updated'),
-                          type: SnackBarType.success,
-                        );
-                      }
-                    },
-                    child: Text(
-                      theme.translate('save'),
-                      style: theme.textStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
+                        if (mounted) {
+                          AppSnackBar.show(
+                            this.context,
+                            message: theme.translate('currency_updated'),
+                            type: SnackBarType.success,
+                          );
+                        }
+                      },
+                      child: Text(
+                        theme.translate('save'),
+                        style: theme.textStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
                       ),
                     ),
                   ),
@@ -567,8 +536,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
         actions: [
           Row(
-            mainAxisAlignment: MainAxisAlignment.end,
-            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               TextButton(
                 onPressed: () => Navigator.pop(context, false),
@@ -581,25 +548,28 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   ),
                 ),
               ),
-              const SizedBox(width: 8),
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.error,
-                  foregroundColor: Colors.white,
-                  elevation: 0,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+              const SizedBox(width: 12),
+              Expanded(
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.error,
+                    foregroundColor: Colors.white,
+                    elevation: 0,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                   ),
-                ),
-                onPressed: () => Navigator.pop(context, true),
-                child: Text(
-                  theme.currentLanguage == 'Persian'
-                      ? 'حذف کامل اطلاعات'
-                      : 'Erase Everything',
-                  style: theme.textStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
+                  onPressed: () => Navigator.pop(context, true),
+                  child: Text(
+                    theme.currentLanguage == 'Persian'
+                        ? 'حذف کامل اطلاعات'
+                        : 'Erase Everything',
+                    style: theme.textStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
                   ),
                 ),
               ),
@@ -665,7 +635,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 children: [
                   SettingsTile(
                     icon: Icons.palette_outlined,
-                    iconColor: theme.activeColor,
+                    iconColor: const Color(0xFF8B5CF6),
                     title: theme.translate('appearance'),
                     subtitle: theme.translate('appearance_desc'),
                     trailing: Icon(
@@ -687,9 +657,13 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     iconColor: AppColors.success,
                     title: theme.translate('currency'),
                     subtitle: theme.isToman
-                        ? (theme.isRtl
-                            ? 'نرخ: ۱ دلار = ${theme.formatNumber(NumberFormat('#,##0').format(theme.usdToTomanRate.round()))} تومان'
-                            : 'Rate: 1 USD = ${NumberFormat('#,##0').format(theme.usdToTomanRate.round())} Toman')
+                        ? (theme.usdToTomanRate > 0
+                            ? (theme.isRtl
+                                ? 'نرخ: ۱ دلار = ${theme.formatNumber(NumberFormat('#,##0').format(theme.usdToTomanRate.round()))} تومان'
+                                : 'Rate: 1 USD = ${NumberFormat('#,##0').format(theme.usdToTomanRate.round())} Toman')
+                            : (theme.isRtl
+                                ? 'نرخ دلار تعیین نشده است'
+                                : 'No exchange rate set'))
                         : (theme.isRtl
                             ? 'محاسبه استاندارد دلاری (\$)'
                             : 'Standard dollar valuation (\$)'),
@@ -728,7 +702,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 children: [
                   SettingsTile(
                     icon: Icons.upload_file_rounded,
-                    iconColor: theme.activeColor,
+                    iconColor: const Color(0xFF0EA5E9),
                     title: theme.translate('export_json_backup'),
                     subtitle: theme.translate('export_backup_desc'),
                     onTap: _isExporting ? null : _exportData,
@@ -745,7 +719,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     iconColor: AppColors.warning,
                     title: theme.translate('paste_backup_text'),
                     subtitle: theme.translate('paste_backup_desc'),
-                    onTap: _showPasteImportDialog,
+                    onTap: _isImporting ? null : _pasteAndRestoreFromClipboard,
                   ),
                 ],
               ),
@@ -757,7 +731,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 children: [
                   SettingsTile(
                     icon: Icons.lightbulb_outline_rounded,
-                    iconColor: theme.activeColor,
+                    iconColor: const Color(0xFFF59E0B),
                     title: theme.translate('replay_onboarding'),
                     subtitle: theme.translate('replay_onboarding_desc'),
                     onTap: () => context.push('/onboarding'),

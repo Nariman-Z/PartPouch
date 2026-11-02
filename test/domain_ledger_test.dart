@@ -458,7 +458,7 @@ void main() {
 
         final exportedJson = await exportImportService.exportToJson();
         expect(exportedJson.contains('PartPouch'), isTrue);
-        expect(exportedJson.contains('ESP32-C3 Dev Board'), isTrue);
+        expect(exportedJson.contains('ESP32-S3-WROOM-1 Dev Board'), isTrue);
 
         // Clear all data
         await exportImportService.resetAllData();
@@ -470,7 +470,7 @@ void main() {
         components = await inventoryRepo.watchComponentsWithStock().first;
         expect(components.length, greaterThanOrEqualTo(5));
         expect(
-          components.any((c) => c.component.name == 'ESP32-C3 Dev Board'),
+          components.any((c) => c.component.name == 'ESP32-S3-WROOM-1 Dev Board'),
           isTrue,
         );
       },

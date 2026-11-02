@@ -18,31 +18,39 @@ class PartPouchBrandTitle extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = ThemeProvider();
 
-    return RichText(
-      text: TextSpan(
-        children: [
-          TextSpan(
-            text: 'Part',
-            style: TextStyle(
-              fontFamily: 'Vazirmatn',
-              color: theme.textColor,
-              fontSize: fontSize,
-              fontWeight: fontWeight,
-              letterSpacing: letterSpacing,
-            ),
+    return ListenableBuilder(
+      listenable: theme,
+      builder: (context, _) {
+        final partColor =
+            theme.isDark ? Colors.white : const Color(0xFF0F172A);
+
+        return RichText(
+          text: TextSpan(
+            children: [
+              TextSpan(
+                text: 'Part',
+                style: TextStyle(
+                  fontFamily: 'Vazirmatn',
+                  color: partColor,
+                  fontSize: fontSize,
+                  fontWeight: fontWeight,
+                  letterSpacing: letterSpacing,
+                ),
+              ),
+              TextSpan(
+                text: 'Pouch',
+                style: TextStyle(
+                  fontFamily: 'Vazirmatn',
+                  color: theme.activeColor,
+                  fontSize: fontSize,
+                  fontWeight: fontWeight,
+                  letterSpacing: letterSpacing,
+                ),
+              ),
+            ],
           ),
-          TextSpan(
-            text: 'Pouch',
-            style: TextStyle(
-              fontFamily: 'Vazirmatn',
-              color: theme.activeColor,
-              fontSize: fontSize,
-              fontWeight: fontWeight,
-              letterSpacing: letterSpacing,
-            ),
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
 }

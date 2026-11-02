@@ -5,6 +5,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:partpouch/app/app.dart';
 import 'package:partpouch/core/database/database.dart';
 import 'package:partpouch/core/database/database_provider.dart';
+import 'package:partpouch/features/locations/data/locations_repository.dart';
+import 'package:partpouch/features/locations/presentation/locations_screen.dart';
 import 'package:partpouch/features/onboarding/presentation/onboarding_screen.dart';
 import 'package:partpouch/features/settings/data/app_settings_repository.dart';
 import 'package:partpouch/features/splash/presentation/splash_screen.dart';
@@ -111,7 +113,6 @@ void main() {
       expect(find.text('Inventory Value'), findsOneWidget);
       expect(find.text('Low Stock'), findsOneWidget);
       expect(find.text('Out of Stock'), findsOneWidget);
-      expect(find.text('To Reorder'), findsOneWidget);
       expect(find.text('Recent Activity'), findsOneWidget);
 
       // Verify 5 bottom navigation destinations
@@ -227,6 +228,52 @@ void main() {
     await tester.pumpAndSettle();
 
     // Unmount widget tree
+    await tester.pumpWidget(const SizedBox());
+    await tester.pumpAndSettle();
+  });
+
+  testWidgets('Locations tree renders hierarchy with tree connectors', (
+    WidgetTester tester,
+  ) async {
+    tester.view.physicalSize = const Size(800, 1400);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    final locRepo = LocationsRepository(db);
+    final wsId = await locRepo.createLocation(name: 'Main Workshop');
+    final cabAId = await locRepo.createLocation(
+      name: 'Cabinet A - SMD & Silicon',
+      parentId: wsId,
+    );
+    await locRepo.createLocation(
+      name: 'Shelf 1 - Passives',
+      parentId: cabAId,
+    );
+    await locRepo.createLocation(
+      name: 'Cabinet B - Modules',
+      parentId: wsId,
+    );
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [databaseProvider.overrideWithValue(db)],
+        child: const MaterialApp(home: LocationsScreen()),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Main Workshop'), findsOneWidget);
+
+    // Locations screen auto-expands branches on first load
+    expect(find.text('Cabinet A - SMD & Silicon'), findsOneWidget);
+    expect(find.text('Cabinet B - Modules'), findsOneWidget);
+    expect(find.text('Shelf 1 - Passives'), findsOneWidget);
+
+    // Tree connector CustomPaint widgets are rendered
+    expect(find.byType(CustomPaint), findsWidgets);
+
+    // Clean up
     await tester.pumpWidget(const SizedBox());
     await tester.pumpAndSettle();
   });

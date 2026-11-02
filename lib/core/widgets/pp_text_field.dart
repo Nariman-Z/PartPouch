@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../theme/theme_provider.dart';
 
 class PpTextField extends StatelessWidget {
@@ -7,6 +8,7 @@ class PpTextField extends StatelessWidget {
   final String? hint;
   final String? initialValue;
   final TextInputType keyboardType;
+  final List<TextInputFormatter>? inputFormatters;
   final int maxLines;
   final int minLines;
   final bool readOnly;
@@ -25,6 +27,7 @@ class PpTextField extends StatelessWidget {
     this.hint,
     this.initialValue,
     this.keyboardType = TextInputType.text,
+    this.inputFormatters,
     this.maxLines = 1,
     this.minLines = 1,
     this.readOnly = false,
@@ -60,6 +63,7 @@ class PpTextField extends StatelessWidget {
           controller: controller,
           initialValue: initialValue,
           keyboardType: keyboardType,
+          inputFormatters: inputFormatters,
           maxLines: maxLines,
           minLines: minLines,
           readOnly: readOnly,

@@ -1,13 +1,18 @@
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../app/theme/app_spacing.dart';
+import 'package:share_plus/share_plus.dart';
+import 'package:url_launcher/url_launcher.dart';
+import '../../../core/constants/app_colors.dart';
 import '../../../core/database/database.dart';
+import '../../../core/formatting/phone_number_formatter.dart';
 import '../../../core/theme/theme_provider.dart';
 import '../../../core/utils/app_snackbar.dart';
 import '../../../core/widgets/pp_card.dart';
 import '../../../core/widgets/pp_empty_state.dart';
 import '../../../core/widgets/pp_text_field.dart';
 import '../data/suppliers_repository.dart';
+import 'widgets/supplier_logo.dart';
 
 class SuppliersScreen extends ConsumerStatefulWidget {
   const SuppliersScreen({super.key});
@@ -31,6 +36,222 @@ class _SuppliersScreenState extends ConsumerState<SuppliersScreen> {
       context: context,
       builder: (context) => _AddEditSupplierDialog(supplier: existing),
     );
+  }
+
+  Future<void> _exportVendors() async {
+    final theme = ThemeProvider();
+    try {
+      final jsonString =
+          await ref.read(suppliersRepositoryProvider).exportSuppliersToJson();
+
+      await SharePlus.instance.share(
+        ShareParams(
+          text: jsonString,
+          subject:
+              'PartPouch_Vendors_${DateTime.now().toIso8601String().substring(0, 10)}.json',
+        ),
+      );
+
+      if (mounted) {
+        AppSnackBar.show(
+          context,
+          message: theme.translate('vendors_exported_success'),
+          type: SnackBarType.success,
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        AppSnackBar.show(
+          context,
+          message: 'Export failed: ${e.toString()}',
+          type: SnackBarType.error,
+        );
+      }
+    }
+  }
+
+  Future<void> _importVendorsFromFile() async {
+    final theme = ThemeProvider();
+    try {
+      final files = await FilePicker.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: ['json'],
+      );
+
+      if (files.isEmpty) return;
+
+      final file = files.first;
+      final content = await file.xFile.readAsString();
+      final count = await ref
+          .read(suppliersRepositoryProvider)
+          .importSuppliersFromJson(content);
+
+      if (mounted) {
+        AppSnackBar.show(
+          context,
+          message: theme.currentLanguage == 'Persian'
+              ? '${theme.formatNumber(count)} تأمین‌کننده با موفقیت وارد شدند.'
+              : '$count vendors imported successfully.',
+          type: SnackBarType.success,
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        AppSnackBar.show(
+          context,
+          message: 'Import failed: ${e.toString()}',
+          type: SnackBarType.error,
+        );
+      }
+    }
+  }
+
+  void _showPasteImportDialog() {
+    final theme = ThemeProvider();
+    final textController = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: theme.secondaryColor,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(24),
+          side: BorderSide(color: theme.borderColor),
+        ),
+        title: Text(
+          theme.translate('paste_vendors_json'),
+          style: theme.textStyle(fontSize: 18, fontWeight: FontWeight.bold),
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              theme.currentLanguage == 'Persian'
+                  ? 'متن JSON حاوی لیست تأمین‌کنندگان را در کادر زیر وارد کنید:'
+                  : 'Paste the vendors JSON data in the box below:',
+              style: theme.textStyle(fontSize: 13, color: theme.subTextColor),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: textController,
+              maxLines: 8,
+              style: theme.textStyle(fontSize: 12, color: theme.textColor),
+              decoration: InputDecoration(
+                hintText:
+                    '{\n  "suppliers": [\n    {"name": "Octopart", "website": "https://octopart.com/"}\n  ]\n}',
+                hintStyle:
+                    theme.textStyle(fontSize: 12, color: theme.subTextColor),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(14),
+                  borderSide: BorderSide(color: theme.borderColor),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(14),
+                  borderSide: BorderSide(color: theme.borderColor),
+                ),
+              ),
+            ),
+          ],
+        ),
+        actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+        actions: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: Text(
+                  theme.translate('cancel'),
+                  style: theme.textStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: theme.subTextColor,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: theme.activeColor,
+                  foregroundColor: Colors.white,
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                onPressed: () async {
+                  final text = textController.text.trim();
+                  if (text.isEmpty) return;
+                  Navigator.pop(context);
+                  try {
+                    final count = await ref
+                        .read(suppliersRepositoryProvider)
+                        .importSuppliersFromJson(text);
+                    if (mounted) {
+                      AppSnackBar.show(
+                        context,
+                        message: theme.currentLanguage == 'Persian'
+                            ? '${theme.formatNumber(count)} تأمین‌کننده با موفقیت وارد شدند.'
+                            : '$count vendors imported successfully.',
+                        type: SnackBarType.success,
+                      );
+                    }
+                  } catch (e) {
+                    if (mounted) {
+                      AppSnackBar.show(
+                        context,
+                        message: 'Import failed: ${e.toString()}',
+                        type: SnackBarType.error,
+                      );
+                    }
+                  }
+                },
+                child: Text(
+                  theme.translate('import_vendors'),
+                  style: theme.textStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _loadDemoVendors() async {
+    final theme = ThemeProvider();
+    try {
+      final count = await ref
+          .read(suppliersRepositoryProvider)
+          .seedDefaultSuppliers();
+
+      if (mounted) {
+        AppSnackBar.show(
+          context,
+          message: count > 0
+              ? (theme.currentLanguage == 'Persian'
+                  ? '${theme.formatNumber(count)} فروشگاه نمونه به لیست اضافه شد.'
+                  : '$count demo vendors added to list.')
+              : (theme.currentLanguage == 'Persian'
+                  ? 'تمامی فروشگاه‌های نمونه از قبل در لیست وجود دارند.'
+                  : 'All demo vendors are already in your list.'),
+          type: SnackBarType.success,
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        AppSnackBar.show(
+          context,
+          message: 'Error: ${e.toString()}',
+          type: SnackBarType.error,
+        );
+      }
+    }
   }
 
   @override
@@ -59,10 +280,117 @@ class _SuppliersScreenState extends ConsumerState<SuppliersScreen> {
               ),
             ),
             actions: [
-              IconButton(
-                icon: Icon(Icons.add_rounded, color: theme.activeColor),
-                tooltip: theme.translate('add_supplier'),
-                onPressed: () => _showAddEditSupplierDialog(),
+              PopupMenuButton<String>(
+                icon: Icon(
+                  Icons.save_rounded,
+                  color: theme.activeColor,
+                  size: 24,
+                ),
+                tooltip: theme.translate('import_export_vendors'),
+                color: theme.secondaryColor,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                  side: BorderSide(color: theme.borderColor),
+                ),
+                onSelected: (val) {
+                  switch (val) {
+                    case 'export':
+                      _exportVendors();
+                      break;
+                    case 'import_file':
+                      _importVendorsFromFile();
+                      break;
+                    case 'import_paste':
+                      _showPasteImportDialog();
+                      break;
+                    case 'demo':
+                      _loadDemoVendors();
+                      break;
+                  }
+                },
+                itemBuilder: (context) => [
+                  PopupMenuItem(
+                    value: 'export',
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.share_rounded,
+                          size: 18,
+                          color: theme.activeColor,
+                        ),
+                        const SizedBox(width: 10),
+                        Text(
+                          theme.translate('export_vendors'),
+                          style: theme.textStyle(
+                            fontSize: 13,
+                            color: theme.textColor,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  PopupMenuItem(
+                    value: 'import_file',
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.file_upload_outlined,
+                          size: 18,
+                          color: theme.activeColor,
+                        ),
+                        const SizedBox(width: 10),
+                        Text(
+                          theme.translate('import_from_file'),
+                          style: theme.textStyle(
+                            fontSize: 13,
+                            color: theme.textColor,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  PopupMenuItem(
+                    value: 'import_paste',
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.content_paste_rounded,
+                          size: 18,
+                          color: theme.activeColor,
+                        ),
+                        const SizedBox(width: 10),
+                        Text(
+                          theme.translate('paste_vendors_json'),
+                          style: theme.textStyle(
+                            fontSize: 13,
+                            color: theme.textColor,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const PopupMenuDivider(),
+                  PopupMenuItem(
+                    value: 'demo',
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.auto_awesome_rounded,
+                          size: 18,
+                          color: theme.activeColor,
+                        ),
+                        const SizedBox(width: 10),
+                        Text(
+                          theme.translate('load_demo_vendors'),
+                          style: theme.textStyle(
+                            fontSize: 13,
+                            color: theme.textColor,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
@@ -193,17 +521,11 @@ class _SupplierCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: theme.activeColor.withValues(alpha: 0.15),
-                  borderRadius: AppSpacing.roundedSm,
-                ),
-                child: Icon(
-                  Icons.storefront_rounded,
-                  color: theme.activeColor,
-                  size: 20,
-                ),
+              SupplierLogo(
+                website: supplier.website,
+                supplierName: supplier.name,
+                size: 40,
+                theme: theme,
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -225,56 +547,89 @@ class _SupplierCard extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           if (supplier.email != null && supplier.email!.isNotEmpty) ...[
-            Row(
-              children: [
-                Icon(
-                  Icons.email_outlined,
-                  size: 14,
-                  color: theme.subTextColor,
-                ),
-                const SizedBox(width: 6),
-                Text(
-                  supplier.email!,
-                  style: theme.textStyle(fontSize: 12, color: theme.subTextColor),
-                ),
-              ],
+            InkWell(
+              onTap: () {
+                final uri = Uri.tryParse('mailto:${supplier.email!}');
+                if (uri != null) launchUrl(uri);
+              },
+              borderRadius: BorderRadius.circular(4),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.email_outlined,
+                    size: 14,
+                    color: theme.subTextColor,
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    supplier.email!,
+                    style: theme.textStyle(fontSize: 12, color: theme.subTextColor),
+                  ),
+                ],
+              ),
             ),
             const SizedBox(height: 2),
           ],
           if (supplier.phone != null && supplier.phone!.isNotEmpty) ...[
-            Row(
-              children: [
-                Icon(
-                  Icons.phone_outlined,
-                  size: 14,
-                  color: theme.subTextColor,
-                ),
-                const SizedBox(width: 6),
-                Text(
-                  theme.formatNumber(supplier.phone!),
-                  style: theme.textStyle(fontSize: 12, color: theme.subTextColor),
-                ),
-              ],
+            InkWell(
+              onTap: () {
+                final uri = Uri.tryParse('tel:${supplier.phone!}');
+                if (uri != null) launchUrl(uri);
+              },
+              borderRadius: BorderRadius.circular(4),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.phone_outlined,
+                    size: 14,
+                    color: theme.subTextColor,
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    theme.formatNumber(
+                      PhoneNumberFormatter.format(supplier.phone!),
+                    ),
+                    style:
+                        theme.textStyle(fontSize: 12, color: theme.subTextColor),
+                  ),
+                ],
+              ),
             ),
             const SizedBox(height: 2),
           ],
           if (supplier.website != null && supplier.website!.isNotEmpty) ...[
-            Row(
-              children: [
-                Icon(Icons.link_rounded, size: 14, color: theme.activeColor),
-                const SizedBox(width: 6),
-                Expanded(
-                  child: Text(
-                    supplier.website!,
-                    style: theme.textStyle(
-                      fontSize: 12,
-                      color: theme.activeColor,
+            InkWell(
+              onTap: () => _openBrowserUrl(context, supplier.website!),
+              borderRadius: BorderRadius.circular(4),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 2),
+                child: Row(
+                  children: [
+                    Icon(Icons.link_rounded, size: 14, color: theme.activeColor),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Text(
+                        supplier.website!,
+                        style: theme.textStyle(
+                          fontSize: 12,
+                          color: theme.activeColor,
+                        ).copyWith(
+                          decoration: TextDecoration.underline,
+                          decorationColor: theme.activeColor,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
+                    const SizedBox(width: 4),
+                    Icon(
+                      Icons.open_in_new_rounded,
+                      size: 13,
+                      color: theme.activeColor.withValues(alpha: 0.7),
+                    ),
+                  ],
                 ),
-              ],
+              ),
             ),
           ],
           if (supplier.notes != null && supplier.notes!.isNotEmpty) ...[
@@ -324,7 +679,7 @@ class _AddEditSupplierDialogState
       text: widget.supplier?.email ?? '',
     );
     _phoneController = TextEditingController(
-      text: widget.supplier?.phone ?? '',
+      text: PhoneNumberFormatter.format(widget.supplier?.phone),
     );
     _websiteController = TextEditingController(
       text: widget.supplier?.website ?? '',
@@ -332,6 +687,9 @@ class _AddEditSupplierDialogState
     _notesController = TextEditingController(
       text: widget.supplier?.notes ?? '',
     );
+    _websiteController.addListener(() {
+      if (mounted) setState(() {});
+    });
   }
 
   @override
@@ -350,6 +708,10 @@ class _AddEditSupplierDialogState
     setState(() => _isLoading = true);
 
     try {
+      final rawPhone = _phoneController.text.trim();
+      final formattedPhone =
+          rawPhone.isEmpty ? null : PhoneNumberFormatter.format(rawPhone);
+
       if (isEdit) {
         await ref
             .read(suppliersRepositoryProvider)
@@ -362,9 +724,7 @@ class _AddEditSupplierDialogState
               email: _emailController.text.trim().isEmpty
                   ? null
                   : _emailController.text.trim(),
-              phone: _phoneController.text.trim().isEmpty
-                  ? null
-                  : _phoneController.text.trim(),
+              phone: formattedPhone,
               notes: _notesController.text.trim().isEmpty
                   ? null
                   : _notesController.text.trim(),
@@ -380,9 +740,7 @@ class _AddEditSupplierDialogState
               email: _emailController.text.trim().isEmpty
                   ? null
                   : _emailController.text.trim(),
-              phone: _phoneController.text.trim().isEmpty
-                  ? null
-                  : _phoneController.text.trim(),
+              phone: formattedPhone,
               notes: _notesController.text.trim().isEmpty
                   ? null
                   : _notesController.text.trim(),
@@ -412,6 +770,103 @@ class _AddEditSupplierDialogState
     }
   }
 
+  Future<void> _deleteSupplier() async {
+    final theme = ThemeProvider();
+    final supplierName = widget.supplier?.name ?? '';
+
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: theme.secondaryColor,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(24),
+          side: BorderSide(color: theme.borderColor),
+        ),
+        title: Text(
+          theme.translate('delete_supplier'),
+          style: theme.textStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+            color: AppColors.error,
+          ),
+        ),
+        content: Text(
+          theme
+              .translate('delete_supplier_confirm')
+              .replaceAll('{name}', supplierName),
+          style: theme.textStyle(fontSize: 13, color: theme.subTextColor),
+        ),
+        actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+        actions: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx, false),
+                child: Text(
+                  theme.translate('cancel'),
+                  style: theme.textStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: theme.subTextColor,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.error,
+                  foregroundColor: Colors.white,
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                onPressed: () => Navigator.pop(ctx, true),
+                child: Text(
+                  theme.translate('delete'),
+                  style: theme.textStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+
+    if (confirm != true || !mounted) return;
+
+    setState(() => _isLoading = true);
+    try {
+      await ref
+          .read(suppliersRepositoryProvider)
+          .deleteSupplier(widget.supplier!.id);
+
+      if (mounted) {
+        Navigator.of(context).pop();
+        AppSnackBar.show(
+          context,
+          message: theme.translate('supplier_deleted_success'),
+          type: SnackBarType.success,
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        AppSnackBar.show(
+          context,
+          message: e.toString(),
+          type: SnackBarType.error,
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = ThemeProvider();
@@ -422,9 +877,30 @@ class _AddEditSupplierDialogState
         borderRadius: BorderRadius.circular(24),
         side: BorderSide(color: theme.borderColor),
       ),
-      title: Text(
-        isEdit ? theme.translate('edit_supplier') : theme.translate('add_supplier'),
-        style: theme.textStyle(fontSize: 18, fontWeight: FontWeight.bold, color: theme.textColor),
+      title: Row(
+        children: [
+          SupplierLogo(
+            website: _websiteController.text.trim().isEmpty
+                ? null
+                : _websiteController.text.trim(),
+            supplierName: _nameController.text,
+            size: 32,
+            theme: theme,
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              isEdit
+                  ? theme.translate('edit_supplier')
+                  : theme.translate('add_supplier'),
+              style: theme.textStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: theme.textColor,
+              ),
+            ),
+          ),
+        ],
       ),
       content: Form(
         key: _formKey,
@@ -456,6 +932,7 @@ class _AddEditSupplierDialogState
                 label: theme.translate('phone'),
                 hint: '+1 800 123 4567',
                 keyboardType: TextInputType.phone,
+                inputFormatters: const [PhoneNumberFormatter()],
               ),
               const SizedBox(height: 12),
               PpTextField(
@@ -480,52 +957,104 @@ class _AddEditSupplierDialogState
       actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
       actions: [
         Row(
-          mainAxisAlignment: MainAxisAlignment.end,
-          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: Text(
-                theme.translate('cancel'),
-                style: theme.textStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: theme.subTextColor,
+            if (isEdit)
+              TextButton.icon(
+                icon: const Icon(
+                  Icons.delete_outline_rounded,
+                  size: 18,
+                  color: AppColors.error,
+                ),
+                label: Text(
+                  theme.translate('delete'),
+                  style: theme.textStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.error,
+                  ),
+                ),
+                onPressed: _isLoading ? null : _deleteSupplier,
+              ),
+            if (!isEdit)
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: Text(
+                  theme.translate('cancel'),
+                  style: theme.textStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: theme.subTextColor,
+                  ),
                 ),
               ),
-            ),
-            const SizedBox(width: 8),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: theme.activeColor,
-                foregroundColor: Colors.white,
-                elevation: 0,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
+            if (!isEdit) const SizedBox(width: 12),
+            if (isEdit) const SizedBox(width: 8),
+            Expanded(
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: theme.activeColor,
+                  foregroundColor: Colors.white,
+                  elevation: 0,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                 ),
+                onPressed: _isLoading ? null : _submit,
+                child: _isLoading
+                    ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
+                      )
+                    : Text(
+                        isEdit ? theme.translate('save') : theme.translate('add'),
+                        style: theme.textStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
               ),
-              onPressed: _isLoading ? null : _submit,
-              child: _isLoading
-                  ? const SizedBox(
-                      width: 18,
-                      height: 18,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color: Colors.white,
-                      ),
-                    )
-                  : Text(
-                      isEdit ? theme.translate('save') : theme.translate('add'),
-                      style: theme.textStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
-                    ),
             ),
           ],
         ),
       ],
     );
+  }
+}
+
+Future<void> _openBrowserUrl(BuildContext context, String urlString) async {
+  String formatted = urlString.trim();
+  if (formatted.isEmpty) return;
+  if (!formatted.startsWith('http://') && !formatted.startsWith('https://')) {
+    formatted = 'https://$formatted';
+  }
+  final uri = Uri.tryParse(formatted);
+  if (uri != null) {
+    try {
+      final launched = await launchUrl(
+        uri,
+        mode: LaunchMode.externalApplication,
+      );
+      if (!launched && context.mounted) {
+        AppSnackBar.show(
+          context,
+          message: 'Could not open link: $formatted',
+          type: SnackBarType.error,
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        AppSnackBar.show(
+          context,
+          message: 'Error opening browser: $e',
+          type: SnackBarType.error,
+        );
+      }
+    }
   }
 }

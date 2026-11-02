@@ -85,7 +85,7 @@ class DashboardScreen extends ConsumerWidget {
                     // 2. Search Bar: At the top of the cards
                     SliverToBoxAdapter(
                       child: Padding(
-                        padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                        padding: const EdgeInsets.fromLTRB(16, 0, 16, 14),
                         child: PpCard(
                           onTap: () => context.push('/search'),
                           backgroundColor: theme.secondaryColor,
@@ -122,7 +122,88 @@ class DashboardScreen extends ConsumerWidget {
                       ),
                     ),
 
-                    // 3. 6 Stat Cards in a 2-Column Grid
+                    // 3. Top Order Card: Total Inventory Valuation Card (moved from Reports)
+                    SliverToBoxAdapter(
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 0, 16, 14),
+                        child: PpCard(
+                          onTap: () => context.push('/reports'),
+                          padding: const EdgeInsets.all(20),
+                          backgroundColor: theme.secondaryColor,
+                          borderColor: theme.borderColor,
+                          borderRadius: BorderRadius.circular(20),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.all(8),
+                                    decoration: BoxDecoration(
+                                      color: AppColors.successContainer,
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    child: const Icon(
+                                      Icons.account_balance_wallet_rounded,
+                                      color: AppColors.success,
+                                      size: 20,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 10),
+                                  Text(
+                                    theme.translate('inventory_value'),
+                                    style: theme.textStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w600,
+                                      color: theme.textColor,
+                                    ),
+                                  ),
+                                  const Spacer(),
+                                  Icon(
+                                    Icons.arrow_forward_ios_rounded,
+                                    size: 14,
+                                    color: theme.subTextColor,
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 14),
+                              Text(
+                                CurrencyFormatter.formatCents(
+                                  summary.totalValuationCents,
+                                ),
+                                style: theme.textStyle(
+                                  color: theme.activeColor,
+                                  fontSize: 32,
+                                  fontWeight: FontWeight.w800,
+                                  letterSpacing: -0.5,
+                                ),
+                              ),
+                              const SizedBox(height: 6),
+                              Text(
+                                theme
+                                    .translate('active_parts_stat')
+                                    .replaceAll(
+                                      '{parts}',
+                                      theme.formatNumber(
+                                        summary.totalComponents,
+                                      ),
+                                    )
+                                    .replaceAll(
+                                      '{units}',
+                                      theme.formatNumber(summary.totalUnits),
+                                    ),
+                                style: theme.textStyle(
+                                  fontSize: 13,
+                                  color: theme.subTextColor,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+
+                    // 4. Stat Cards in a 2-Column Grid (Replacing the old small inventory card)
                     SliverPadding(
                       padding: const EdgeInsets.symmetric(horizontal: 16),
                       sliver: SliverGrid.count(
@@ -159,24 +240,7 @@ class DashboardScreen extends ConsumerWidget {
                             theme: theme,
                           ),
 
-                          // Card 3: Inventory Value
-                          _DashboardStatCard(
-                            title: theme.translate('inventory_value'),
-                            value: theme.formatNumber(
-                              CurrencyFormatter.formatCents(
-                                summary.totalValuationCents,
-                              ),
-                            ),
-                            iconWidget: Icon(
-                              Icons.donut_large_rounded,
-                              color: AppColors.secondary,
-                              size: 20,
-                            ),
-                            onTap: () => context.push('/reports'),
-                            theme: theme,
-                          ),
-
-                          // Card 4: Low Stock
+                          // Card 3: Low Stock
                           _DashboardStatCard(
                             title: theme.translate('low_stock'),
                             value: theme.formatNumber(summary.lowStockCount),
@@ -189,7 +253,7 @@ class DashboardScreen extends ConsumerWidget {
                             theme: theme,
                           ),
 
-                          // Card 5: Out of Stock
+                          // Card 4: Out of Stock
                           _DashboardStatCard(
                             title: theme.translate('out_of_stock'),
                             value: theme.formatNumber(summary.outOfStockCount),
@@ -209,24 +273,78 @@ class DashboardScreen extends ConsumerWidget {
                             onTap: () => context.push('/low-stock'),
                             theme: theme,
                           ),
-
-                          // Card 6: To Reorder
-                          _DashboardStatCard(
-                            title: theme.translate('to_reorder'),
-                            value: theme.formatNumber(
-                              summary.lowStockCount + summary.outOfStockCount,
-                            ),
-                            iconWidget: const Icon(
-                              Icons.sync,
-                              color: AppColors.success,
-                              size: 20,
-                            ),
-                            onTap: () => context.push('/purchasing'),
-                            theme: theme,
-                          ),
                         ],
                       ),
                     ),
+
+                    // 5. Reorder Alert Banner (when replenishment needed)
+                    if (summary.lowStockCount + summary.outOfStockCount > 0)
+                      SliverToBoxAdapter(
+                        child: Padding(
+                          padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+                          child: PpCard(
+                            onTap: () => context.push('/purchasing'),
+                            backgroundColor: theme.secondaryColor,
+                            borderColor: theme.borderColor,
+                            borderRadius: BorderRadius.circular(16),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 12,
+                            ),
+                            child: Row(
+                              children: [
+                                Container(
+                                  width: 38,
+                                  height: 38,
+                                  decoration: BoxDecoration(
+                                    color: theme.activeColor
+                                        .withValues(alpha: 0.12),
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  alignment: Alignment.center,
+                                  child: Icon(
+                                    Icons.sync_rounded,
+                                    color: theme.activeColor,
+                                    size: 20,
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        theme.translate('to_reorder'),
+                                        style: theme.textStyle(
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.bold,
+                                          color: theme.textColor,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 2),
+                                      Text(
+                                        '${theme.formatNumber(summary.lowStockCount + summary.outOfStockCount)} ${theme.currentLanguage == 'Persian' ? 'قطعه نیازمند سفارش مجدد' : 'components require replenishment'}',
+                                        style: theme.textStyle(
+                                          fontSize: 12,
+                                          color: theme.subTextColor,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                Icon(
+                                  theme.isRtl
+                                      ? Icons.chevron_left_rounded
+                                      : Icons.chevron_right_rounded,
+                                  size: 16,
+                                  color: theme.subTextColor,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
 
                     // 4. Section Title: Recent Activity
                     SliverToBoxAdapter(

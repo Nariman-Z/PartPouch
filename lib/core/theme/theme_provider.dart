@@ -42,8 +42,9 @@ class ThemeProvider extends ChangeNotifier {
   String get currency => _currency;
   bool get isToman => _currency == 'TOMAN';
 
-  double _usdToTomanRate = 275000.0;
-  double get usdToTomanRate => _usdToTomanRate;
+  double? _usdToTomanRate;
+  double get usdToTomanRate => _usdToTomanRate ?? 0.0;
+  bool get hasExchangeRate => _usdToTomanRate != null && _usdToTomanRate! > 0;
 
   String get currencySymbol =>
       isToman ? (_currentLanguage == 'Persian' ? 'تومان' : 'Toman') : '\$';
@@ -171,8 +172,16 @@ class ThemeProvider extends ChangeNotifier {
     } catch (_) {}
   }
 
-  Future<void> setUsdToTomanRate(double rate) async {
-    if (rate <= 0) return;
+  Future<void> setUsdToTomanRate(double? rate) async {
+    if (rate == null || rate <= 0) {
+      _usdToTomanRate = null;
+      notifyListeners();
+      try {
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.remove(_ratePreferenceKey);
+      } catch (_) {}
+      return;
+    }
     _usdToTomanRate = rate;
     notifyListeners();
     try {
@@ -194,7 +203,7 @@ class ThemeProvider extends ChangeNotifier {
     _currentLanguage = 'English';
     _activeColor = AppColors.accentOrange;
     _currency = 'USD';
-    _usdToTomanRate = 275000.0;
+    _usdToTomanRate = null;
     _rebuildStyleCache();
     notifyListeners();
     try {
@@ -226,29 +235,59 @@ class ThemeProvider extends ChangeNotifier {
     return input;
   }
 
-  /// Formats integer cents into active currency (USD or recalculated Toman)
-  String formatCurrency(int? cents) {
+  /// Formats integer cents into active currency (USD or recalculated Toman).
+  /// When [compact] is true, uses "K" and "M" with rounded numbers for values >= 1,000.
+  /// When [compact] is false (default), returns the exact unrounded financial amount.
+  String formatCurrency(int? cents, {bool compact = false}) {
     if (cents == null) return '--';
     final double usdAmount = cents / 100.0;
 
     if (isToman) {
-      final double tomanAmount = usdAmount * _usdToTomanRate;
-      final String formattedToman =
-          NumberFormat('#,##0').format(tomanAmount.round());
+      if (_usdToTomanRate == null || _usdToTomanRate! <= 0) {
+        return isRtl ? '-- تومان' : '-- Toman';
+      }
+      final double tomanAmount = usdAmount * _usdToTomanRate!;
+      final String formattedToman = compact
+          ? formatCompactAmount(tomanAmount)
+          : NumberFormat('#,##0').format(tomanAmount.round());
       if (isRtl) {
         return '${formatNumber(formattedToman)} تومان';
       } else {
         return '$formattedToman Toman';
       }
     } else {
-      final formattedUsd = NumberFormat.currency(
-        symbol: '\$',
-        decimalDigits: 2,
-      ).format(usdAmount);
+      final String formattedUsd = compact
+          ? formatCompactAmount(usdAmount, isUsd: true)
+          : NumberFormat('#,##0.00').format(usdAmount);
       if (isRtl) {
-        return formatNumber(formattedUsd);
+        return '${formatNumber(formattedUsd)}\$';
       } else {
-        return formattedUsd;
+        return '\$$formattedUsd';
+      }
+    }
+  }
+
+  /// Formats numeric amounts using K and M for >= 1,000 and >= 1,000,000 (rounded up)
+  String formatCompactAmount(double amount, {bool isUsd = false}) {
+    if (amount >= 1000000) {
+      final double inM = amount / 1000000.0;
+      final double rounded = (inM * 10).ceil() / 10.0;
+      final String numStr = rounded == rounded.roundToDouble()
+          ? rounded.toInt().toString()
+          : rounded.toStringAsFixed(1);
+      return '${numStr}M';
+    } else if (amount >= 1000) {
+      final double inK = amount / 1000.0;
+      final double rounded = (inK * 10).ceil() / 10.0;
+      final String numStr = rounded == rounded.roundToDouble()
+          ? rounded.toInt().toString()
+          : rounded.toStringAsFixed(1);
+      return '${numStr}K';
+    } else {
+      if (isUsd) {
+        return NumberFormat('#,##0.00').format(amount);
+      } else {
+        return NumberFormat('#,##0').format(amount.ceil());
       }
     }
   }

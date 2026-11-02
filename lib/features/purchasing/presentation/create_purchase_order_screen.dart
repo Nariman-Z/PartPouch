@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../../app/theme/app_spacing.dart';
 import '../../../core/database/database.dart';
 import '../../../core/formatting/currency_formatter.dart';
+import '../../../core/formatting/date_formatter.dart';
 import '../../../core/theme/theme_provider.dart';
 import '../../../core/utils/app_snackbar.dart';
 import '../../../core/widgets/pp_button.dart';
@@ -27,8 +28,8 @@ class _CreatePurchaseOrderScreenState
   late final TextEditingController _orderNumberController;
   final _notesController = TextEditingController();
   String? _selectedSupplierId;
-  final DateTime _orderDate = DateTime.now();
-  final DateTime? _expectedDate = null;
+  DateTime _orderDate = DateTime.now();
+  DateTime? _expectedDate;
 
   final List<NewPurchaseOrderItem> _items = [];
   bool _isLoading = false;
@@ -204,6 +205,137 @@ class _CreatePurchaseOrderScreenState
                       onChanged: (val) => setState(() => _selectedSupplierId = val),
                     );
                   },
+                ),
+                const SizedBox(height: 12),
+
+                // Order Date & Expected Arrival Date
+                Row(
+                  children: [
+                    Expanded(
+                      child: InkWell(
+                        onTap: () async {
+                          final picked = await showDatePicker(
+                            context: context,
+                            initialDate: _orderDate,
+                            firstDate: DateTime(2020),
+                            lastDate: DateTime(2035),
+                          );
+                          if (picked != null) {
+                            setState(() => _orderDate = picked);
+                          }
+                        },
+                        borderRadius: BorderRadius.circular(14),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 14,
+                            vertical: 12,
+                          ),
+                          decoration: BoxDecoration(
+                            color: theme.secondaryColor,
+                            borderRadius: BorderRadius.circular(14),
+                            border: Border.all(color: theme.borderColor),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                theme.translate('order_date'),
+                                style: theme.textStyle(
+                                  fontSize: 11,
+                                  color: theme.subTextColor,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Row(
+                                children: [
+                                  Icon(
+                                    Icons.calendar_today_rounded,
+                                    size: 14,
+                                    color: theme.activeColor,
+                                  ),
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    DateFormatter.formatDate(_orderDate),
+                                    style: theme.textStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w600,
+                                      color: theme.textColor,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: InkWell(
+                        onTap: () async {
+                          final picked = await showDatePicker(
+                            context: context,
+                            initialDate: _expectedDate ??
+                                DateTime.now().add(const Duration(days: 7)),
+                            firstDate: DateTime.now()
+                                .subtract(const Duration(days: 30)),
+                            lastDate: DateTime(2035),
+                          );
+                          if (picked != null) {
+                            setState(() => _expectedDate = picked);
+                          }
+                        },
+                        borderRadius: BorderRadius.circular(14),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 14,
+                            vertical: 12,
+                          ),
+                          decoration: BoxDecoration(
+                            color: theme.secondaryColor,
+                            borderRadius: BorderRadius.circular(14),
+                            border: Border.all(color: theme.borderColor),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                theme.translate('expected_date'),
+                                style: theme.textStyle(
+                                  fontSize: 11,
+                                  color: theme.subTextColor,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Row(
+                                children: [
+                                  Icon(
+                                    Icons.event_available_rounded,
+                                    size: 14,
+                                    color: theme.activeColor,
+                                  ),
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    _expectedDate != null
+                                        ? DateFormatter.formatDate(
+                                            _expectedDate!)
+                                        : (theme.currentLanguage == 'Persian'
+                                            ? 'تعیین نشده'
+                                            : 'Not set'),
+                                    style: theme.textStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w600,
+                                      color: theme.textColor,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
                 const SizedBox(height: 12),
 

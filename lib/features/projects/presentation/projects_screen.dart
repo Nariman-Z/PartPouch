@@ -3,12 +3,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../app/theme/app_colors.dart';
 import '../../../app/theme/app_spacing.dart';
+import '../../../core/formatting/currency_formatter.dart';
 import '../../../core/formatting/date_formatter.dart';
 import '../../../core/theme/theme_provider.dart';
 import '../../../core/utils/app_snackbar.dart';
 import '../../../core/widgets/pp_badge.dart';
 import '../../../core/widgets/pp_card.dart';
 import '../../../core/widgets/pp_empty_state.dart';
+import '../../../core/widgets/pp_icon_picker.dart';
 import '../../../core/widgets/pp_text_field.dart';
 import '../data/projects_repository.dart';
 
@@ -22,6 +24,14 @@ class ProjectsScreen extends ConsumerStatefulWidget {
 class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
   String _selectedStatusFilter = 'All'; // All, inProgress, planning, completed
   String _sortBy = 'updated_desc';
+  final _searchController = TextEditingController();
+  String _searchQuery = '';
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
 
   void _showAddProjectDialog() {
     showDialog(
@@ -107,9 +117,60 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
           ),
           body: Column(
             children: [
+              // Search Field
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 4, 16, 10),
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: theme.secondaryColor,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: theme.borderColor, width: 1),
+                  ),
+                  child: TextField(
+                    controller: _searchController,
+                    cursorColor: theme.activeColor,
+                    style:
+                        theme.textStyle(fontSize: 14, color: theme.textColor),
+                    decoration: InputDecoration(
+                      hintText: theme.translate('projects_search_hint'),
+                      hintStyle: theme.textStyle(
+                        fontSize: 13,
+                        color: theme.subTextColor,
+                      ),
+                      prefixIcon: Icon(
+                        Icons.search_rounded,
+                        color: theme.subTextColor,
+                        size: 20,
+                      ),
+                      suffixIcon: _searchQuery.isNotEmpty
+                          ? IconButton(
+                              icon: Icon(
+                                Icons.clear_rounded,
+                                color: theme.subTextColor,
+                                size: 18,
+                              ),
+                              onPressed: () {
+                                setState(() {
+                                  _searchController.clear();
+                                  _searchQuery = '';
+                                });
+                              },
+                            )
+                          : null,
+                      border: InputBorder.none,
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 13,
+                      ),
+                    ),
+                    onChanged: (val) => setState(() => _searchQuery = val),
+                  ),
+                ),
+              ),
+
               // Filter Tabs
               Padding(
-                padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
                 child: Row(
                   children: [
                     _buildFilterChip('All', theme.translate('filter_all'), theme),
@@ -134,7 +195,16 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
                       );
                     }
 
-                    final projects = snapshot.data ?? [];
+                    final allProjects = snapshot.data ?? [];
+                    final query = _searchQuery.trim().toLowerCase();
+
+                    final projects = query.isEmpty
+                        ? List<ProjectWithBomSummary>.from(allProjects)
+                        : allProjects.where((item) {
+                            final name = item.project.name.toLowerCase();
+                            final desc = item.project.description?.toLowerCase() ?? '';
+                            return name.contains(query) || desc.contains(query);
+                          }).toList();
 
                     if (_sortBy == 'name_asc') {
                       projects.sort((a, b) => a.project.name.compareTo(b.project.name));
@@ -144,13 +214,21 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
                       projects.sort((a, b) => (a.project.targetDate ?? DateTime(2099)).compareTo(b.project.targetDate ?? DateTime(2099)));
                     }
 
-                    if (projects.isEmpty) {
+                    if (allProjects.isEmpty) {
                       return PpEmptyState(
                         icon: Icons.assignment_outlined,
                         title: theme.translate('no_projects_found'),
                         message: theme.currentLanguage == 'Persian'
                             ? 'پروژه‌ای برای مدیریت لیست قطعات (BOM) تعریف کنید.'
                             : 'Create a build project to organize Bills of Materials (BOM) and track component availability.',
+                      );
+                    }
+
+                    if (projects.isEmpty) {
+                      return PpEmptyState(
+                        icon: Icons.search_off_rounded,
+                        title: theme.translate('no_results_found'),
+                        message: theme.translate('no_projects_matched'),
                       );
                     }
 
@@ -193,15 +271,15 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
       child: GestureDetector(
         onTap: () => setState(() => _selectedStatusFilter = status),
         child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 8),
+          height: 36,
           decoration: BoxDecoration(
             color: isSelected
                 ? theme.activeColor.withValues(alpha: 0.15)
                 : theme.secondaryColor,
-            borderRadius: AppSpacing.roundedSm,
+            borderRadius: BorderRadius.circular(10),
             border: Border.all(
               color: isSelected ? theme.activeColor : theme.borderColor,
-              width: 1,
+              width: 1.2,
             ),
           ),
           alignment: Alignment.center,
@@ -257,7 +335,7 @@ class _ProjectCard extends StatelessWidget {
                   borderRadius: AppSpacing.roundedSm,
                 ),
                 child: Icon(
-                  Icons.build_outlined,
+                  item.iconData,
                   color: theme.activeColor,
                   size: 20,
                 ),
@@ -275,11 +353,33 @@ class _ProjectCard extends StatelessWidget {
                         color: theme.textColor,
                       ),
                     ),
-                    if (p.targetDate != null)
-                      Text(
-                        '${theme.currentLanguage == 'Persian' ? 'مهلت تحویل' : 'Due'}: ${DateFormatter.formatDate(p.targetDate!)}',
-                        style: theme.textStyle(fontSize: 12, color: theme.subTextColor),
+                    if (p.targetDate != null) ...[
+                      const SizedBox(height: 2),
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.calendar_today_rounded,
+                            size: 11,
+                            color: p.targetDate!.isBefore(DateTime.now()) &&
+                                    p.status != 'completed'
+                                ? AppColors.error
+                                : theme.activeColor,
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            '${theme.currentLanguage == 'Persian' ? 'مهلت تحویل' : 'Due'}: ${DateFormatter.formatDate(p.targetDate!)}',
+                            style: theme.textStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: p.targetDate!.isBefore(DateTime.now()) &&
+                                      p.status != 'completed'
+                                  ? AppColors.error
+                                  : theme.textColor,
+                            ),
+                          ),
+                        ],
                       ),
+                    ],
                   ],
                 ),
               ),
@@ -297,7 +397,7 @@ class _ProjectCard extends StatelessWidget {
           ],
           const SizedBox(height: 12),
 
-          // BOM Progress Bar
+          // BOM Progress Bar & Total Cost
           Row(
             children: [
               Expanded(
@@ -305,7 +405,9 @@ class _ProjectCard extends StatelessWidget {
                   borderRadius: AppSpacing.roundedFull,
                   child: LinearProgressIndicator(
                     value: progress,
-                    backgroundColor: theme.isDark ? const Color(0xFF262A30) : const Color(0xFFEAEFF5),
+                    backgroundColor: theme.isDark
+                        ? const Color(0xFF262A30)
+                        : const Color(0xFFEAEFF5),
                     color: item.isFullyStocked
                         ? AppColors.success
                         : theme.activeColor,
@@ -324,6 +426,20 @@ class _ProjectCard extends StatelessWidget {
                   fontWeight: FontWeight.bold,
                 ),
               ),
+              if (item.totalEstimatedCostCents > 0) ...[
+                Text(
+                  ' • ',
+                  style: theme.textStyle(fontSize: 11, color: theme.subTextColor),
+                ),
+                Text(
+                  CurrencyFormatter.formatCents(item.totalEstimatedCostCents),
+                  style: theme.textStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                    color: theme.activeColor,
+                  ),
+                ),
+              ],
             ],
           ),
         ],
@@ -361,7 +477,8 @@ class _AddProjectDialogState extends ConsumerState<_AddProjectDialog> {
   final _nameController = TextEditingController();
   final _descController = TextEditingController();
   String _status = 'inProgress';
-  final DateTime? _targetDate = null;
+  IconData _selectedIcon = Icons.build_rounded;
+  DateTime? _targetDate;
   bool _isLoading = false;
 
   @override
@@ -386,6 +503,7 @@ class _AddProjectDialogState extends ConsumerState<_AddProjectDialog> {
                 : _descController.text.trim(),
             status: _status,
             targetDate: _targetDate,
+            iconCodePoint: _selectedIcon.codePoint,
           );
 
       if (mounted) {
@@ -431,7 +549,14 @@ class _AddProjectDialogState extends ConsumerState<_AddProjectDialog> {
         child: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              PpProjectIconSelector(
+                selectedIcon: _selectedIcon,
+                onChanged: (newIcon) => setState(() => _selectedIcon = newIcon),
+                theme: theme,
+              ),
+              const SizedBox(height: 14),
               PpTextField(
                 controller: _nameController,
                 label: '${theme.currentLanguage == 'Persian' ? 'نام پروژه' : 'Project Name'} *',
@@ -473,6 +598,55 @@ class _AddProjectDialogState extends ConsumerState<_AddProjectDialog> {
                 onChanged: (val) => setState(() => _status = val!),
               ),
               const SizedBox(height: 12),
+              InkWell(
+                onTap: () async {
+                  final picked = await showDatePicker(
+                    context: context,
+                    initialDate: _targetDate ?? DateTime.now().add(const Duration(days: 30)),
+                    firstDate: DateTime(2020),
+                    lastDate: DateTime(2100),
+                  );
+                  if (picked != null) {
+                    setState(() => _targetDate = picked);
+                  }
+                },
+                borderRadius: BorderRadius.circular(12),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                  decoration: BoxDecoration(
+                    color: theme.primaryColor,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: theme.borderColor),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.calendar_today_rounded,
+                        size: 18,
+                        color: _targetDate != null ? theme.activeColor : theme.subTextColor,
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          _targetDate != null
+                              ? '${theme.translate('target_date')}: ${DateFormatter.formatDate(_targetDate!)}'
+                              : '${theme.translate('target_date')} (${theme.currentLanguage == 'Persian' ? 'اختیاری' : 'Optional'})',
+                          style: theme.textStyle(
+                            fontSize: 13,
+                            color: _targetDate != null ? theme.textColor : theme.subTextColor,
+                          ),
+                        ),
+                      ),
+                      if (_targetDate != null)
+                        GestureDetector(
+                          onTap: () => setState(() => _targetDate = null),
+                          child: Icon(Icons.close_rounded, size: 18, color: theme.subTextColor),
+                        ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
               PpTextField(
                 controller: _descController,
                 label: theme.translate('notes'),
@@ -488,8 +662,6 @@ class _AddProjectDialogState extends ConsumerState<_AddProjectDialog> {
       actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
       actions: [
         Row(
-          mainAxisAlignment: MainAxisAlignment.end,
-          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
@@ -502,34 +674,37 @@ class _AddProjectDialogState extends ConsumerState<_AddProjectDialog> {
                 ),
               ),
             ),
-            const SizedBox(width: 8),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: theme.activeColor,
-                foregroundColor: Colors.white,
-                elevation: 0,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
+            const SizedBox(width: 12),
+            Expanded(
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: theme.activeColor,
+                  foregroundColor: Colors.white,
+                  elevation: 0,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                 ),
+                onPressed: _isLoading ? null : _submit,
+                child: _isLoading
+                    ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
+                      )
+                    : Text(
+                        theme.translate('add'),
+                        style: theme.textStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
               ),
-              onPressed: _isLoading ? null : _submit,
-              child: _isLoading
-                  ? const SizedBox(
-                      width: 18,
-                      height: 18,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color: Colors.white,
-                      ),
-                    )
-                  : Text(
-                      theme.translate('add'),
-                      style: theme.textStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
-                    ),
             ),
           ],
         ),

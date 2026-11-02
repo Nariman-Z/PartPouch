@@ -5,12 +5,14 @@ import '../../../app/theme/app_spacing.dart';
 import '../../../core/database/database.dart';
 import '../../../core/formatting/currency_formatter.dart';
 import '../../../core/formatting/date_formatter.dart';
+import '../../../core/theme/category_colors.dart';
 import '../../../core/theme/theme_provider.dart';
 import '../../../core/utils/app_snackbar.dart';
 import '../../../core/widgets/pp_badge.dart';
 import '../../../core/widgets/pp_button.dart';
 import '../../../core/widgets/pp_card.dart';
 import '../../../core/widgets/pp_empty_state.dart';
+import '../../../core/widgets/pp_icon_picker.dart';
 import '../../../core/widgets/pp_text_field.dart';
 import '../../inventory/data/inventory_repository.dart';
 import '../data/projects_repository.dart';
@@ -24,6 +26,17 @@ class ProjectDetailScreen extends ConsumerWidget {
     showDialog(
       context: context,
       builder: (context) => _AddBomItemDialog(projectId: projectId),
+    );
+  }
+
+  void _showEditProjectDialog(
+    BuildContext context,
+    WidgetRef ref,
+    Project project,
+  ) {
+    showDialog(
+      context: context,
+      builder: (context) => _EditProjectDialog(project: project),
     );
   }
 
@@ -99,8 +112,51 @@ class ProjectDetailScreen extends ConsumerWidget {
             actions: [
               IconButton(
                 icon: Icon(
+                  Icons.edit_outlined,
+                  color: theme.activeColor,
+                ),
+                tooltip: theme.translate('edit_project'),
+                onPressed: () => _showEditProjectDialog(context, ref, project),
+              ),
+              IconButton(
+                icon: Icon(
+                  Icons.palette_outlined,
+                  color: theme.activeColor,
+                ),
+                tooltip: theme.translate('change_icon'),
+                onPressed: () async {
+                  final curCodePoint = await ref
+                      .read(projectsRepositoryProvider)
+                      .getProjectIcon(project.id);
+                  final currentIcon = curCodePoint != null
+                      // ignore: non_const_argument_for_const_parameter
+                      ? IconData(curCodePoint, fontFamily: 'MaterialIcons')
+                      : Icons.build_outlined;
+                  if (context.mounted) {
+                    PpIconPicker.show(
+                      context: context,
+                      theme: theme,
+                      selectedIcon: currentIcon,
+                      onSelect: (newIcon) async {
+                        await ref
+                            .read(projectsRepositoryProvider)
+                            .setProjectIcon(project.id, newIcon.codePoint);
+                        if (context.mounted) {
+                          AppSnackBar.show(
+                            context,
+                            message: theme.translate('icon_updated_success'),
+                            type: SnackBarType.success,
+                          );
+                        }
+                      },
+                    );
+                  }
+                },
+              ),
+              IconButton(
+                icon: Icon(
                   Icons.add_shopping_cart,
-                  color: theme.primaryColor,
+                  color: theme.activeColor,
                 ),
                 tooltip: theme.translate('add_line_item'),
                 onPressed: () => _showAddBomItemDialog(context, ref),
@@ -133,6 +189,90 @@ class ProjectDetailScreen extends ConsumerWidget {
                             children: [
                               Row(
                                 children: [
+                                  StreamBuilder<int?>(
+                                    stream: ref
+                                        .watch(projectsRepositoryProvider)
+                                        .watchProjectIcon(project.id),
+                                    builder: (context, iconSnap) {
+                                      final iconCodePoint = iconSnap.data;
+                                      final iconData = iconCodePoint != null
+                                          // ignore: non_const_argument_for_const_parameter
+                                          ? IconData(iconCodePoint,
+                                              fontFamily: 'MaterialIcons')
+                                          : Icons.build_outlined;
+
+                                      return Tooltip(
+                                        message: theme.translate('change_icon'),
+                                        child: InkWell(
+                                          onTap: () {
+                                            PpIconPicker.show(
+                                              context: context,
+                                              theme: theme,
+                                              selectedIcon: iconData,
+                                              onSelect: (newIcon) async {
+                                                await ref
+                                                    .read(projectsRepositoryProvider)
+                                                    .setProjectIcon(project.id,
+                                                        newIcon.codePoint);
+                                                if (context.mounted) {
+                                                  AppSnackBar.show(
+                                                    context,
+                                                    message: theme.translate(
+                                                        'icon_updated_success'),
+                                                    type: SnackBarType.success,
+                                                  );
+                                                }
+                                              },
+                                            );
+                                          },
+                                          borderRadius:
+                                              BorderRadius.circular(14),
+                                          child: Container(
+                                            padding: const EdgeInsets.all(10),
+                                            decoration: BoxDecoration(
+                                              color: theme.activeColor
+                                                  .withValues(alpha: 0.15),
+                                              borderRadius:
+                                                  BorderRadius.circular(14),
+                                              border: Border.all(
+                                                color: theme.activeColor
+                                                    .withValues(alpha: 0.3),
+                                                width: 1,
+                                              ),
+                                            ),
+                                            child: Stack(
+                                              clipBehavior: Clip.none,
+                                              children: [
+                                                Icon(
+                                                  iconData,
+                                                  color: theme.activeColor,
+                                                  size: 24,
+                                                ),
+                                                Positioned(
+                                                  right: -4,
+                                                  bottom: -4,
+                                                  child: Container(
+                                                    padding:
+                                                        const EdgeInsets.all(2),
+                                                    decoration: BoxDecoration(
+                                                      color: theme.activeColor,
+                                                      shape: BoxShape.circle,
+                                                    ),
+                                                    child: const Icon(
+                                                      Icons.edit,
+                                                      color: Colors.white,
+                                                      size: 8,
+                                                    ),
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        ),
+                                      );
+                                    },
+                                  ),
+                                  const SizedBox(width: 12),
                                   Expanded(
                                     child: Text(
                                       project.name,
@@ -154,10 +294,46 @@ class ProjectDetailScreen extends ConsumerWidget {
                                 ],
                               ),
                               if (project.targetDate != null) ...[
-                                const SizedBox(height: 4),
-                                Text(
-                                  '${theme.currentLanguage == 'Persian' ? 'مهلت تحویل' : 'Target'}: ${DateFormatter.formatDate(project.targetDate!)}',
-                                  style: theme.textStyle(fontSize: 12, color: textSec),
+                                const SizedBox(height: 6),
+                                Row(
+                                  children: [
+                                    Icon(
+                                      Icons.calendar_today_rounded,
+                                      size: 13,
+                                      color: project.targetDate!.isBefore(DateTime.now()) &&
+                                              project.status != 'completed'
+                                          ? AppColors.error
+                                          : theme.activeColor,
+                                    ),
+                                    const SizedBox(width: 6),
+                                    Flexible(
+                                      child: Text(
+                                        '${theme.currentLanguage == 'Persian' ? 'مهلت تحویل' : 'Deadline'}: ${DateFormatter.formatDate(project.targetDate!)}',
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: theme.textStyle(
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w600,
+                                          color: project.targetDate!.isBefore(DateTime.now()) &&
+                                                  project.status != 'completed'
+                                              ? AppColors.error
+                                              : textPri,
+                                        ),
+                                      ),
+                                    ),
+                                    if (project.targetDate!.isBefore(DateTime.now()) &&
+                                        project.status != 'completed') ...[
+                                      const SizedBox(width: 6),
+                                      Text(
+                                        '(${theme.currentLanguage == 'Persian' ? 'گذشته' : 'Overdue'})',
+                                        style: theme.textStyle(
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.bold,
+                                          color: AppColors.error,
+                                        ),
+                                      ),
+                                    ],
+                                  ],
                                 ),
                               ],
                               if (project.description != null &&
@@ -208,8 +384,8 @@ class ProjectDetailScreen extends ConsumerWidget {
                                           totalCost,
                                         ),
                                         style: theme.textStyle(
-                                          fontSize: 14,
-                                          color: theme.primaryColor,
+                                          fontSize: 15,
+                                          color: theme.activeColor,
                                           fontWeight: FontWeight.bold,
                                         ),
                                       ),
@@ -231,13 +407,13 @@ class ProjectDetailScreen extends ConsumerWidget {
                               style: theme.textStyle(fontSize: 16, fontWeight: FontWeight.w700, color: textPri),
                             ),
                             TextButton.icon(
-                              icon: Icon(Icons.add, size: 16, color: theme.primaryColor),
+                              icon: Icon(Icons.add, size: 16, color: theme.activeColor),
                               label: Text(
                                 theme.translate('add_line_item'),
                                 style: theme.textStyle(
                                   fontSize: 13,
                                   fontWeight: FontWeight.w600,
-                                  color: theme.primaryColor,
+                                  color: theme.activeColor,
                                 ),
                               ),
                               onPressed: () =>
@@ -280,16 +456,30 @@ class ProjectDetailScreen extends ConsumerWidget {
                                 backgroundColor: cardBg,
                                 borderColor: cardBorder,
                                 child: Row(
+                                  crossAxisAlignment:
+                                      CrossAxisAlignment.center,
                                   children: [
                                     Container(
                                       padding: const EdgeInsets.all(8),
                                       decoration: BoxDecoration(
-                                        color: theme.primaryColor.withValues(alpha: 0.15),
+                                        color: CategoryColors.getContainerColor(
+                                          comp.category,
+                                          isDark: theme.isDark,
+                                        ),
                                         borderRadius: AppSpacing.roundedSm,
+                                        border: Border.all(
+                                          color: CategoryColors.getColor(
+                                            comp.category,
+                                          ).withValues(alpha: 0.3),
+                                          width: 1,
+                                        ),
                                       ),
                                       child: Icon(
-                                        Icons.memory,
-                                        color: theme.primaryColor,
+                                        _getCategoryIcon(comp.category),
+                                        color: CategoryColors.getForegroundColor(
+                                          comp.category,
+                                          isDark: theme.isDark,
+                                        ),
                                         size: 20,
                                       ),
                                     ),
@@ -298,20 +488,50 @@ class ProjectDetailScreen extends ConsumerWidget {
                                       child: Column(
                                         crossAxisAlignment:
                                             CrossAxisAlignment.start,
+                                        mainAxisSize: MainAxisSize.min,
                                         children: [
-                                          Text(
-                                            comp.name,
-                                            style: theme.textStyle(
-                                              fontSize: 14,
-                                              fontWeight: FontWeight.w600,
-                                              color: textPri,
+                                          CategoryColors.buildTitleRichText(
+                                            name: comp.name,
+                                            category: comp.category,
+                                            textColor: textPri,
+                                            subTextColor: textSec,
+                                            fontSize: 14,
+                                            isPersian:
+                                                theme.currentLanguage ==
+                                                    'Persian',
+                                          ),
+                                          if (comp.packageFootprint != null &&
+                                              comp.packageFootprint!
+                                                  .trim()
+                                                  .isNotEmpty) ...[
+                                            const SizedBox(height: 3),
+                                            Text(
+                                              comp.packageFootprint!,
+                                              maxLines: 1,
+                                              overflow:
+                                                  TextOverflow.ellipsis,
+                                              style: theme.textStyle(
+                                                fontSize: 11.5,
+                                                fontWeight: FontWeight.w500,
+                                                color: textSec,
+                                              ),
                                             ),
-                                          ),
-                                          const SizedBox(height: 2),
-                                          Text(
-                                            '${comp.category}${comp.packageFootprint != null ? ' • ${comp.packageFootprint}' : ''}',
-                                            style: theme.textStyle(fontSize: 12, color: textSec),
-                                          ),
+                                          ] else if (comp.description != null &&
+                                              comp.description!
+                                                  .trim()
+                                                  .isNotEmpty) ...[
+                                            const SizedBox(height: 3),
+                                            Text(
+                                              comp.description!,
+                                              maxLines: 1,
+                                              overflow:
+                                                  TextOverflow.ellipsis,
+                                              style: theme.textStyle(
+                                                fontSize: 11.5,
+                                                color: textSec,
+                                              ),
+                                            ),
+                                          ],
                                           if (item.shortage > 0) ...[
                                             const SizedBox(height: 4),
                                             Text(
@@ -326,34 +546,55 @@ class ProjectDetailScreen extends ConsumerWidget {
                                         ],
                                       ),
                                     ),
-                                    // Required vs Available Badge
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 10,
-                                        vertical: 4,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        color: item.isSatisfied
-                                            ? AppColors.successContainer
-                                            : AppColors.errorContainer,
-                                        borderRadius: AppSpacing.roundedSm,
-                                        border: Border.all(
-                                          color: item.isSatisfied
-                                              ? AppColors.success
-                                              : AppColors.error,
-                                          width: 1,
+                                    // Required vs Available Badge & Line Cost
+                                    Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.end,
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 10,
+                                            vertical: 4,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            color: item.isSatisfied
+                                                ? AppColors.successContainer
+                                                : AppColors.errorContainer,
+                                            borderRadius: AppSpacing.roundedSm,
+                                            border: Border.all(
+                                              color: item.isSatisfied
+                                                  ? AppColors.success
+                                                  : AppColors.error,
+                                              width: 1,
+                                            ),
+                                          ),
+                                          child: Text(
+                                            '${theme.formatNumber(item.availableStock)} / ${theme.formatNumber(item.bom.quantityRequired)}',
+                                            style: theme.textStyle(
+                                              fontSize: 11,
+                                              color: item.isSatisfied
+                                                  ? AppColors.success
+                                                  : AppColors.error,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
                                         ),
-                                      ),
-                                      child: Text(
-                                        '${theme.formatNumber(item.availableStock)} / ${theme.formatNumber(item.bom.quantityRequired)}',
-                                        style: theme.textStyle(
-                                          fontSize: 11,
-                                          color: item.isSatisfied
-                                              ? AppColors.success
-                                              : AppColors.error,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
+                                        if (item.estimatedCostCents > 0) ...[
+                                          const SizedBox(height: 3),
+                                          Text(
+                                            CurrencyFormatter.formatCents(
+                                              item.estimatedCostCents,
+                                            ),
+                                            style: theme.textStyle(
+                                              fontSize: 11,
+                                              color: theme.activeColor,
+                                              fontWeight: FontWeight.w700,
+                                            ),
+                                          ),
+                                        ],
+                                      ],
                                     ),
                                     const SizedBox(width: 4),
                                     IconButton(
@@ -578,8 +819,6 @@ class _AddBomItemDialogState extends ConsumerState<_AddBomItemDialog> {
       actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
       actions: [
         Row(
-          mainAxisAlignment: MainAxisAlignment.end,
-          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
@@ -592,34 +831,37 @@ class _AddBomItemDialogState extends ConsumerState<_AddBomItemDialog> {
                 ),
               ),
             ),
-            const SizedBox(width: 8),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: theme.activeColor,
-                foregroundColor: Colors.white,
-                elevation: 0,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
+            const SizedBox(width: 12),
+            Expanded(
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: theme.activeColor,
+                  foregroundColor: Colors.white,
+                  elevation: 0,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                 ),
+                onPressed: _isLoading ? null : _submit,
+                child: _isLoading
+                    ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
+                      )
+                    : Text(
+                        theme.translate('add'),
+                        style: theme.textStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
               ),
-              onPressed: _isLoading ? null : _submit,
-              child: _isLoading
-                  ? const SizedBox(
-                      width: 18,
-                      height: 18,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color: Colors.white,
-                      ),
-                    )
-                  : Text(
-                      theme.translate('add'),
-                      style: theme.textStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
-                    ),
             ),
           ],
         ),
@@ -855,6 +1097,327 @@ class _IssueToProjectSheetState extends ConsumerState<_IssueToProjectSheet> {
           ),
         ),
       ),
+    );
+  }
+}
+
+IconData _getCategoryIcon(String category) {
+  final lower = category.toLowerCase();
+  if (lower.contains('micro') ||
+      lower.contains('mcu') ||
+      lower.contains('esp') ||
+      lower.contains('cpu') ||
+      lower.contains('arduino') ||
+      lower.contains('stm32')) {
+    return Icons.developer_board_rounded;
+  } else if (lower.contains('resistor')) {
+    return Icons.linear_scale_rounded;
+  } else if (lower.contains('display') ||
+      lower.contains('screen') ||
+      lower.contains('oled') ||
+      lower.contains('lcd') ||
+      lower.contains('tft')) {
+    return Icons.tv_rounded;
+  } else if (lower.contains('cap')) {
+    return Icons.battery_charging_full_rounded;
+  } else if (lower.contains('inductor') || lower.contains('coil')) {
+    return Icons.waves_rounded;
+  } else if (lower.contains('diode') || lower.contains('rectifier')) {
+    return Icons.arrow_forward_rounded;
+  } else if (lower.contains('led') || lower.contains('opto')) {
+    return Icons.lightbulb_outline_rounded;
+  } else if (lower.contains('sensor')) {
+    return Icons.sensors_rounded;
+  } else if (lower.contains('transistor') || lower.contains('mosfet')) {
+    return Icons.schema_rounded;
+  } else if (lower.contains('power') ||
+      lower.contains('regulator') ||
+      lower.contains('converter')) {
+    return Icons.bolt_rounded;
+  } else if (lower.contains('switch') || lower.contains('relay')) {
+    return Icons.toggle_on_rounded;
+  } else if (lower.contains('module') || lower.contains('shield')) {
+    return Icons.extension_rounded;
+  } else if (lower.contains('connector') ||
+      lower.contains('header') ||
+      lower.contains('terminal')) {
+    return Icons.cable_rounded;
+  } else if (lower.contains('hardware') || lower.contains('screw')) {
+    return Icons.build_rounded;
+  }
+  return Icons.memory_rounded;
+}
+
+class _EditProjectDialog extends ConsumerStatefulWidget {
+  final Project project;
+
+  const _EditProjectDialog({required this.project});
+
+  @override
+  ConsumerState<_EditProjectDialog> createState() => _EditProjectDialogState();
+}
+
+class _EditProjectDialogState extends ConsumerState<_EditProjectDialog> {
+  final _formKey = GlobalKey<FormState>();
+  late final TextEditingController _nameController;
+  late final TextEditingController _descController;
+  late String _status;
+  late DateTime? _targetDate;
+  bool _isLoading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _nameController = TextEditingController(text: widget.project.name);
+    _descController =
+        TextEditingController(text: widget.project.description ?? '');
+    _status = widget.project.status;
+    _targetDate = widget.project.targetDate;
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _descController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _submit() async {
+    final theme = ThemeProvider();
+    if (!_formKey.currentState!.validate()) return;
+    setState(() => _isLoading = true);
+
+    try {
+      await ref.read(projectsRepositoryProvider).updateProject(
+            id: widget.project.id,
+            name: _nameController.text.trim(),
+            description: _descController.text.trim().isEmpty
+                ? null
+                : _descController.text.trim(),
+            status: _status,
+            targetDate: _targetDate,
+          );
+
+      if (mounted) {
+        Navigator.of(context).pop();
+        AppSnackBar.show(
+          context,
+          message: theme.translate('edit_project_success'),
+          type: SnackBarType.success,
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        AppSnackBar.show(
+          context,
+          message: e.toString(),
+          type: SnackBarType.error,
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = ThemeProvider();
+
+    return AlertDialog(
+      backgroundColor: theme.secondaryColor,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(24),
+        side: BorderSide(color: theme.borderColor),
+      ),
+      title: Text(
+        theme.translate('edit_project'),
+        style: theme.textStyle(
+          fontSize: 18,
+          fontWeight: FontWeight.w700,
+          color: theme.textColor,
+        ),
+      ),
+      content: Form(
+        key: _formKey,
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              PpTextField(
+                controller: _nameController,
+                label:
+                    '${theme.currentLanguage == 'Persian' ? 'نام پروژه' : 'Project Name'} *',
+                validator: (val) {
+                  if (val == null || val.trim().isEmpty) {
+                    return theme.translate('required_field');
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: 12),
+              DropdownButtonFormField<String>(
+                initialValue: _status,
+                dropdownColor: theme.secondaryColor,
+                style: theme.textStyle(fontSize: 14, color: theme.textColor),
+                decoration: InputDecoration(
+                  labelText: theme.translate('status'),
+                  labelStyle:
+                      theme.textStyle(fontSize: 13, color: theme.subTextColor),
+                ),
+                items: [
+                  DropdownMenuItem(
+                    value: 'inProgress',
+                    child: Text(theme.translate('in_progress'),
+                        style: theme.textStyle(
+                            fontSize: 14, color: theme.textColor)),
+                  ),
+                  DropdownMenuItem(
+                    value: 'planning',
+                    child: Text(theme.translate('planning'),
+                        style: theme.textStyle(
+                            fontSize: 14, color: theme.textColor)),
+                  ),
+                  DropdownMenuItem(
+                    value: 'onHold',
+                    child: Text(theme.translate('on_hold'),
+                        style: theme.textStyle(
+                            fontSize: 14, color: theme.textColor)),
+                  ),
+                  DropdownMenuItem(
+                    value: 'completed',
+                    child: Text(theme.translate('completed'),
+                        style: theme.textStyle(
+                            fontSize: 14, color: theme.textColor)),
+                  ),
+                  DropdownMenuItem(
+                    value: 'cancelled',
+                    child: Text(theme.translate('cancelled'),
+                        style: theme.textStyle(
+                            fontSize: 14, color: theme.textColor)),
+                  ),
+                ],
+                onChanged: (val) => setState(() => _status = val!),
+              ),
+              const SizedBox(height: 12),
+              InkWell(
+                onTap: () async {
+                  final picked = await showDatePicker(
+                    context: context,
+                    initialDate: _targetDate ??
+                        DateTime.now().add(const Duration(days: 30)),
+                    firstDate: DateTime(2020),
+                    lastDate: DateTime(2100),
+                  );
+                  if (picked != null) {
+                    setState(() => _targetDate = picked);
+                  }
+                },
+                borderRadius: BorderRadius.circular(12),
+                child: Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                  decoration: BoxDecoration(
+                    color: theme.primaryColor,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: theme.borderColor),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.calendar_today_rounded,
+                        size: 18,
+                        color: _targetDate != null
+                            ? theme.activeColor
+                            : theme.subTextColor,
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          _targetDate != null
+                              ? '${theme.translate('target_date')}: ${DateFormatter.formatDate(_targetDate!)}'
+                              : '${theme.translate('target_date')} (${theme.currentLanguage == 'Persian' ? 'اختیاری' : 'Optional'})',
+                          style: theme.textStyle(
+                            fontSize: 13,
+                            color: _targetDate != null
+                                ? theme.textColor
+                                : theme.subTextColor,
+                          ),
+                        ),
+                      ),
+                      if (_targetDate != null)
+                        GestureDetector(
+                          onTap: () => setState(() => _targetDate = null),
+                          child: Icon(Icons.close_rounded,
+                              size: 18, color: theme.subTextColor),
+                        ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              PpTextField(
+                controller: _descController,
+                label: theme.translate('notes'),
+                hint: theme.currentLanguage == 'Persian'
+                    ? 'شرح اهداف پروژه، مشخصات، لینک شماتیک...'
+                    : 'Brief goals, schematic link, requirements...',
+                maxLines: 3,
+              ),
+            ],
+          ),
+        ),
+      ),
+      actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+      actions: [
+        Row(
+          children: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text(
+                theme.translate('cancel'),
+                style: theme.textStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: theme.subTextColor,
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: theme.activeColor,
+                  foregroundColor: Colors.white,
+                  elevation: 0,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                onPressed: _isLoading ? null : _submit,
+                child: _isLoading
+                    ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
+                      )
+                    : Text(
+                        theme.translate('save'),
+                        style: theme.textStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+              ),
+            ),
+          ],
+        ),
+      ],
     );
   }
 }

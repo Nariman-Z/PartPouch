@@ -10,6 +10,7 @@ class PpCard extends StatelessWidget {
   final Color? borderColor;
   final BorderRadius? borderRadius;
   final bool isNeumorphic;
+  final Clip clipBehavior;
 
   const PpCard({
     super.key,
@@ -20,6 +21,7 @@ class PpCard extends StatelessWidget {
     this.borderColor,
     this.borderRadius,
     this.isNeumorphic = true,
+    this.clipBehavior = Clip.none,
   });
 
   @override
@@ -68,6 +70,7 @@ class PpCard extends StatelessWidget {
 
     Widget content = AnimatedContainer(
       duration: const Duration(milliseconds: 200),
+      clipBehavior: clipBehavior,
       padding: padding,
       decoration: BoxDecoration(
         color: effectiveBg,

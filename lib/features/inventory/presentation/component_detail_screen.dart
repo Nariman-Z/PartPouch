@@ -425,12 +425,12 @@ class _ComponentDetailScreenState extends ConsumerState<ComponentDetailScreen>
                                         Container(
                                           padding: const EdgeInsets.all(8),
                                           decoration: BoxDecoration(
-                                            color: theme.primaryColor.withValues(alpha: 0.15),
+                                            color: theme.activeColor.withValues(alpha: 0.15),
                                             borderRadius: AppSpacing.roundedSm,
                                           ),
                                           child: Icon(
                                             Icons.place,
-                                            color: theme.primaryColor,
+                                            color: theme.activeColor,
                                             size: 20,
                                           ),
                                         ),
@@ -598,7 +598,7 @@ class _ComponentDetailScreenState extends ConsumerState<ComponentDetailScreen>
                         children: [
                           Expanded(
                             child: PpButton(
-                              label: theme.translate('use_stock'),
+                              label: theme.translate('use'),
                               variant: PpButtonVariant.secondary,
                               icon: Icons.upload,
                               onPressed: totalStock > 0
@@ -612,7 +612,7 @@ class _ComponentDetailScreenState extends ConsumerState<ComponentDetailScreen>
                           const SizedBox(width: 8),
                           Expanded(
                             child: PpButton(
-                              label: theme.translate('receive_stock'),
+                              label: theme.translate('receive'),
                               icon: Icons.download,
                               onPressed: () => ReceiveStockDialog.show(
                                 context,
@@ -623,7 +623,7 @@ class _ComponentDetailScreenState extends ConsumerState<ComponentDetailScreen>
                           const SizedBox(width: 8),
                           Expanded(
                             child: PpButton(
-                              label: theme.translate('transfer_stock'),
+                              label: theme.translate('transfer'),
                               variant: PpButtonVariant.outline,
                               icon: Icons.sync_alt,
                               onPressed: totalStock > 0

@@ -64,7 +64,13 @@ class ProjectsRepository {
     if (statusFilter != null &&
         statusFilter.isNotEmpty &&
         statusFilter != 'All') {
-      query.where((tbl) => tbl.status.equals(statusFilter));
+      if (statusFilter == 'inProgress') {
+        query.where((tbl) => tbl.status.isIn(['inProgress', 'in_progress']));
+      } else if (statusFilter == 'onHold') {
+        query.where((tbl) => tbl.status.isIn(['onHold', 'on_hold']));
+      } else {
+        query.where((tbl) => tbl.status.equals(statusFilter));
+      }
     }
     query.orderBy([(tbl) => OrderingTerm.desc(tbl.updatedAt)]);
 

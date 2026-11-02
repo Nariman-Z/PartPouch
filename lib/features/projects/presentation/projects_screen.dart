@@ -7,8 +7,8 @@ import '../../../core/formatting/currency_formatter.dart';
 import '../../../core/formatting/date_formatter.dart';
 import '../../../core/theme/theme_provider.dart';
 import '../../../core/utils/app_snackbar.dart';
-import '../../../core/widgets/pp_badge.dart';
 import '../../../core/widgets/pp_card.dart';
+import '../../../core/widgets/pp_corner_ribbon.dart';
 import '../../../core/widgets/pp_empty_state.dart';
 import '../../../core/widgets/pp_icon_picker.dart';
 import '../../../core/widgets/pp_text_field.dart';
@@ -313,155 +313,150 @@ class _ProjectCard extends StatelessWidget {
         ? (item.completedBomItems / item.totalBomItems)
         : 0.0;
 
-    final (BadgeVariant variant, String statusLabel) = _getStatusBadge(
-      p.status,
-      theme,
-    );
-
     return PpCard(
       onTap: () => context.push('/project/${p.id}'),
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.zero,
+      clipBehavior: Clip.antiAlias,
       backgroundColor: theme.secondaryColor,
       borderColor: theme.borderColor,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Stack(
         children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: theme.activeColor.withValues(alpha: 0.15),
-                  borderRadius: AppSpacing.roundedSm,
-                ),
-                child: Icon(
-                  item.iconData,
-                  color: theme.activeColor,
-                  size: 20,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
                   children: [
-                    Text(
-                      p.name,
-                      style: theme.textStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w700,
-                        color: theme.textColor,
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: theme.activeColor.withValues(alpha: 0.15),
+                        borderRadius: AppSpacing.roundedSm,
+                      ),
+                      child: Icon(
+                        item.iconData,
+                        color: theme.activeColor,
+                        size: 20,
                       ),
                     ),
-                    if (p.targetDate != null) ...[
-                      const SizedBox(height: 2),
-                      Row(
-                        children: [
-                          Icon(
-                            Icons.calendar_today_rounded,
-                            size: 11,
-                            color: p.targetDate!.isBefore(DateTime.now()) &&
-                                    p.status != 'completed'
-                                ? AppColors.error
-                                : theme.activeColor,
-                          ),
-                          const SizedBox(width: 4),
-                          Text(
-                            '${theme.currentLanguage == 'Persian' ? 'مهلت تحویل' : 'Due'}: ${DateFormatter.formatDate(p.targetDate!)}',
-                            style: theme.textStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
-                              color: p.targetDate!.isBefore(DateTime.now()) &&
-                                      p.status != 'completed'
-                                  ? AppColors.error
-                                  : theme.textColor,
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Padding(
+                        padding: const EdgeInsetsDirectional.only(end: 36),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              p.name,
+                              style: theme.textStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w700,
+                                color: theme.textColor,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
                             ),
-                          ),
-                        ],
+                            if (p.targetDate != null) ...[
+                              const SizedBox(height: 2),
+                              Row(
+                                children: [
+                                  Icon(
+                                    Icons.calendar_today_rounded,
+                                    size: 11,
+                                    color: p.targetDate!.isBefore(DateTime.now()) &&
+                                            p.status != 'completed'
+                                        ? AppColors.error
+                                        : theme.activeColor,
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    '${theme.currentLanguage == 'Persian' ? 'مهلت تحویل' : 'Due'}: ${DateFormatter.formatDate(p.targetDate!)}',
+                                    style: theme.textStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w600,
+                                      color: p.targetDate!.isBefore(DateTime.now()) &&
+                                              p.status != 'completed'
+                                          ? AppColors.error
+                                          : theme.textColor,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                if (p.description != null && p.description!.isNotEmpty) ...[
+                  const SizedBox(height: 8),
+                  Text(
+                    p.description!,
+                    style: theme.textStyle(fontSize: 12, color: theme.subTextColor),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+                const SizedBox(height: 12),
+
+                // BOM Progress Bar & Total Cost
+                Row(
+                  children: [
+                    Expanded(
+                      child: ClipRRect(
+                        borderRadius: AppSpacing.roundedFull,
+                        child: LinearProgressIndicator(
+                          value: progress,
+                          backgroundColor: theme.isDark
+                              ? const Color(0xFF262A30)
+                              : const Color(0xFFEAEFF5),
+                          color: item.isFullyStocked
+                              ? AppColors.success
+                              : theme.activeColor,
+                          minHeight: 6,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Text(
+                      '${theme.formatNumber(item.completedBomItems)}/${theme.formatNumber(item.totalBomItems)} ${theme.translate('in_stock')}',
+                      style: theme.textStyle(
+                        fontSize: 11,
+                        color: item.isFullyStocked
+                            ? AppColors.success
+                            : theme.subTextColor,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    if (item.totalEstimatedCostCents > 0) ...[
+                      Text(
+                        ' • ',
+                        style: theme.textStyle(fontSize: 11, color: theme.subTextColor),
+                      ),
+                      Text(
+                        CurrencyFormatter.formatCents(item.totalEstimatedCostCents),
+                        style: theme.textStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          color: theme.activeColor,
+                        ),
                       ),
                     ],
                   ],
                 ),
-              ),
-              PpBadge(label: statusLabel, variant: variant),
-            ],
-          ),
-          if (p.description != null && p.description!.isNotEmpty) ...[
-            const SizedBox(height: 8),
-            Text(
-              p.description!,
-              style: theme.textStyle(fontSize: 12, color: theme.subTextColor),
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ],
-          const SizedBox(height: 12),
-
-          // BOM Progress Bar & Total Cost
-          Row(
-            children: [
-              Expanded(
-                child: ClipRRect(
-                  borderRadius: AppSpacing.roundedFull,
-                  child: LinearProgressIndicator(
-                    value: progress,
-                    backgroundColor: theme.isDark
-                        ? const Color(0xFF262A30)
-                        : const Color(0xFFEAEFF5),
-                    color: item.isFullyStocked
-                        ? AppColors.success
-                        : theme.activeColor,
-                    minHeight: 6,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Text(
-                '${theme.formatNumber(item.completedBomItems)}/${theme.formatNumber(item.totalBomItems)} ${theme.translate('in_stock')}',
-                style: theme.textStyle(
-                  fontSize: 11,
-                  color: item.isFullyStocked
-                      ? AppColors.success
-                      : theme.subTextColor,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              if (item.totalEstimatedCostCents > 0) ...[
-                Text(
-                  ' • ',
-                  style: theme.textStyle(fontSize: 11, color: theme.subTextColor),
-                ),
-                Text(
-                  CurrencyFormatter.formatCents(item.totalEstimatedCostCents),
-                  style: theme.textStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold,
-                    color: theme.activeColor,
-                  ),
-                ),
               ],
-            ],
+            ),
+          ),
+          PositionedDirectional(
+            top: 0,
+            end: 0,
+            child: PpCornerRibbon.fromProjectStatus(p.status, theme),
           ),
         ],
       ),
     );
-  }
-
-  (BadgeVariant, String) _getStatusBadge(String status, ThemeProvider theme) {
-    switch (status) {
-      case 'inProgress':
-        return (BadgeVariant.primary, theme.translate('in_progress'));
-      case 'planning':
-        return (BadgeVariant.info, theme.translate('planning'));
-      case 'completed':
-        return (BadgeVariant.success, theme.translate('completed'));
-      case 'onHold':
-        return (BadgeVariant.warning, theme.translate('on_hold'));
-      case 'cancelled':
-        return (BadgeVariant.error, theme.translate('cancelled'));
-      default:
-        return (BadgeVariant.neutral, status);
-    }
   }
 }
 

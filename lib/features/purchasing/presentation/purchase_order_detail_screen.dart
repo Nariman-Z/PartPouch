@@ -418,11 +418,14 @@ class PurchaseOrderDetailScreen extends ConsumerWidget {
   String _getLocalizedStatus(String status, ThemeProvider theme) {
     switch (status) {
       case 'ordered':
+      case 'submitted':
       case 'draft':
         return theme.translate('draft');
       case 'partiallyReceived':
+      case 'partially_received':
         return theme.translate('partially_received');
       case 'received':
+      case 'completed':
         return theme.translate('received');
       case 'cancelled':
         return theme.translate('cancelled');

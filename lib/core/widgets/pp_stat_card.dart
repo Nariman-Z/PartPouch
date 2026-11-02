@@ -75,16 +75,20 @@ class PpStatCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 12),
-          Text(
-            formattedValue,
-            style: theme.textStyle(
-              fontSize: 21,
-              fontWeight: FontWeight.w800,
-              color: effectiveValueColor,
-              letterSpacing: -0.5,
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment:
+                theme.isRtl ? Alignment.centerRight : Alignment.centerLeft,
+            child: Text(
+              formattedValue,
+              style: theme.textStyle(
+                fontSize: 21,
+                fontWeight: FontWeight.w800,
+                color: effectiveValueColor,
+                letterSpacing: -0.5,
+              ),
+              maxLines: 1,
             ),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
           ),
           const SizedBox(height: 3),
           Text(

@@ -70,7 +70,15 @@ class PurchasingRepository {
         statusFilter != 'All') {
       if (statusFilter == 'draft') {
         query.where((tbl) =>
-            tbl.status.equals('draft') | tbl.status.equals('ordered'));
+            tbl.status.isIn(['draft', 'ordered', 'submitted']));
+      } else if (statusFilter == 'partiallyReceived') {
+        query.where((tbl) =>
+            tbl.status.isIn(['partiallyReceived', 'partially_received']));
+      } else if (statusFilter == 'received') {
+        query.where((tbl) =>
+            tbl.status.isIn(['received', 'completed']));
+      } else if (statusFilter == 'cancelled') {
+        query.where((tbl) => tbl.status.equals('cancelled'));
       } else {
         query.where((tbl) => tbl.status.equals(statusFilter));
       }

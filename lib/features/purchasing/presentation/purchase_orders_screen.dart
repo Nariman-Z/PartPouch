@@ -4,7 +4,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:share_plus/share_plus.dart';
 import '../../../app/theme/app_spacing.dart';
-import '../../../core/constants/app_colors.dart';
 import '../../../core/formatting/currency_formatter.dart';
 import '../../../core/formatting/date_formatter.dart';
 import '../../../core/theme/theme_provider.dart';
@@ -447,10 +446,6 @@ class _PurchaseOrdersScreenState extends ConsumerState<PurchaseOrdersScreen> {
                         return _PurchaseOrderCard(
                           item: item,
                           theme: theme,
-                          onCancel: () => _confirmCancelOrder(
-                            item.order.id,
-                            theme,
-                          ),
                         );
                       },
                     );
@@ -470,76 +465,6 @@ class _PurchaseOrdersScreenState extends ConsumerState<PurchaseOrdersScreen> {
         );
       },
     );
-  }
-
-  Future<void> _confirmCancelOrder(
-    String orderId,
-    ThemeProvider theme,
-  ) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: theme.secondaryColor,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Text(
-          theme.currentLanguage == 'Persian'
-              ? 'لغو سفارش خرید'
-              : 'Cancel Purchase Order',
-          style: theme.textStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
-            color: theme.textColor,
-          ),
-        ),
-        content: Text(
-          theme.currentLanguage == 'Persian'
-              ? 'آیا از لغو این سفارش خرید اطمینان دارید؟'
-              : 'Are you sure you want to cancel this purchase order?',
-          style: theme.textStyle(fontSize: 13, color: theme.subTextColor),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: Text(
-              theme.translate('cancel'),
-              style: theme.textStyle(color: theme.subTextColor),
-            ),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.error,
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
-            ),
-            onPressed: () => Navigator.pop(ctx, true),
-            child: Text(
-              theme.currentLanguage == 'Persian' ? 'لغو سفارش' : 'Cancel Order',
-              style: theme.textStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-
-    if (confirmed == true && mounted) {
-      await ref
-          .read(purchasingRepositoryProvider)
-          .updateOrderStatus(orderId, 'cancelled');
-      if (mounted) {
-        AppSnackBar.show(
-          context,
-          message: theme.currentLanguage == 'Persian'
-              ? 'سفارش خرید لغو شد'
-              : 'Purchase order cancelled',
-          type: SnackBarType.info,
-        );
-      }
-    }
   }
 
   Widget _buildFilterChip(String status, String label, ThemeProvider theme) {
@@ -576,12 +501,10 @@ class _PurchaseOrdersScreenState extends ConsumerState<PurchaseOrdersScreen> {
 class _PurchaseOrderCard extends StatelessWidget {
   final PurchaseOrderWithDetails item;
   final ThemeProvider theme;
-  final VoidCallback? onCancel;
 
   const _PurchaseOrderCard({
     required this.item,
     required this.theme,
-    this.onCancel,
   });
 
   @override
@@ -692,44 +615,6 @@ class _PurchaseOrderCard extends StatelessWidget {
               ),
               const SizedBox(width: 8),
               PpBadge(label: statusLabel, variant: variant),
-              if (po.status != 'cancelled' && po.status != 'received') ...[
-                const SizedBox(width: 4),
-                PopupMenuButton<String>(
-                  icon: Icon(
-                    Icons.more_vert_rounded,
-                    size: 18,
-                    color: theme.subTextColor,
-                  ),
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(minWidth: 32),
-                  onSelected: (val) {
-                    if (val == 'cancel') {
-                      onCancel?.call();
-                    }
-                  },
-                  itemBuilder: (context) => [
-                    PopupMenuItem(
-                      value: 'cancel',
-                      child: Row(
-                        children: [
-                          const Icon(Icons.cancel_outlined,
-                              size: 18, color: AppColors.error),
-                          const SizedBox(width: 8),
-                          Text(
-                            theme.currentLanguage == 'Persian'
-                                ? 'لغو سفارش'
-                                : 'Cancel Order',
-                            style: theme.textStyle(
-                              fontSize: 13,
-                              color: AppColors.error,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ],
             ],
           ),
           Divider(
@@ -761,11 +646,14 @@ class _PurchaseOrderCard extends StatelessWidget {
   (BadgeVariant, String) _getStatusBadge(String status) {
     switch (status) {
       case 'ordered':
+      case 'submitted':
       case 'draft':
         return (BadgeVariant.neutral, theme.translate('draft'));
       case 'partiallyReceived':
+      case 'partially_received':
         return (BadgeVariant.warning, theme.translate('partially_received'));
       case 'received':
+      case 'completed':
         return (BadgeVariant.success, theme.translate('received'));
       case 'cancelled':
         return (BadgeVariant.error, theme.translate('cancelled'));

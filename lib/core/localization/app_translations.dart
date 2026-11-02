@@ -80,6 +80,9 @@ class AppTranslations {
       'receive_stock': 'Receive Stock',
       'use_stock': 'Use Stock',
       'transfer_stock': 'Transfer Stock',
+      'use': 'Use',
+      'receive': 'Receive',
+      'transfer': 'Transfer',
       'print_qr': 'Share / Print QR',
 
       // --- LOCATIONS ---
@@ -97,6 +100,8 @@ class AppTranslations {
       'stored_parts': 'Stored Parts',
 
       // --- PROJECTS ---
+      'project_overview': 'Project Overview',
+      'bill_of_materials_bom': 'Bill Of Materials (BOM)',
       'projects_and_bom': 'Projects & BOM',
       'target_units': 'Target Units',
       'required_parts': 'Required Parts',
@@ -432,6 +437,9 @@ class AppTranslations {
       'receive_stock': 'ورود به انبار (دریافت)',
       'use_stock': 'مصرف قطعه',
       'transfer_stock': 'انتقال بین قفسه‌ها',
+      'use': 'مصرف',
+      'receive': 'دریافت',
+      'transfer': 'انتقال',
       'print_qr': 'اشتراک‌گذاری / چاپ بارکد',
 
       // --- LOCATIONS ---
@@ -449,6 +457,8 @@ class AppTranslations {
       'stored_parts': 'قطعات موجود در این مکان',
 
       // --- PROJECTS ---
+      'project_overview': 'نمای کلی پروژه',
+      'bill_of_materials_bom': 'فهرست قطعات (BOM)',
       'projects_and_bom': 'پروژه‌ها و لیست قطعات (BOM)',
       'target_units': 'تعداد هدف برای ساخت',
       'required_parts': 'قطعات مورد نیاز',

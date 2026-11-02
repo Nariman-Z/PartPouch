@@ -8,9 +8,9 @@ import '../../../core/formatting/date_formatter.dart';
 import '../../../core/theme/category_colors.dart';
 import '../../../core/theme/theme_provider.dart';
 import '../../../core/utils/app_snackbar.dart';
-import '../../../core/widgets/pp_badge.dart';
 import '../../../core/widgets/pp_button.dart';
 import '../../../core/widgets/pp_card.dart';
+import '../../../core/widgets/pp_corner_ribbon.dart';
 import '../../../core/widgets/pp_empty_state.dart';
 import '../../../core/widgets/pp_icon_picker.dart';
 import '../../../core/widgets/pp_text_field.dart';
@@ -103,12 +103,9 @@ class ProjectDetailScreen extends ConsumerWidget {
         return Scaffold(
           backgroundColor: bg,
           appBar: AppBar(
-            title: Text(
-              project.name,
-              style: theme.textStyle(fontSize: 18, fontWeight: FontWeight.w700),
-            ),
             backgroundColor: bg,
             elevation: 0,
+            scrolledUnderElevation: 0,
             actions: [
               IconButton(
                 icon: Icon(
@@ -179,120 +176,132 @@ class ProjectDetailScreen extends ConsumerWidget {
                     child: ListView(
                       padding: const EdgeInsets.all(16),
                       children: [
+                        // Section Header: Project Overview
+                        Text(
+                          theme.translate('project_overview'),
+                          style: theme.textStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
+                            color: textPri,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+
                         // Project Overview Card
                         PpCard(
-                          padding: const EdgeInsets.all(16),
+                          padding: EdgeInsets.zero,
+                          clipBehavior: Clip.antiAlias,
                           backgroundColor: cardBg,
                           borderColor: cardBorder,
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
+                          child: Stack(
                             children: [
-                              Row(
-                                children: [
-                                  StreamBuilder<int?>(
-                                    stream: ref
-                                        .watch(projectsRepositoryProvider)
-                                        .watchProjectIcon(project.id),
-                                    builder: (context, iconSnap) {
-                                      final iconCodePoint = iconSnap.data;
-                                      final iconData = iconCodePoint != null
-                                          // ignore: non_const_argument_for_const_parameter
-                                          ? IconData(iconCodePoint,
-                                              fontFamily: 'MaterialIcons')
-                                          : Icons.build_outlined;
+                              Padding(
+                                padding: const EdgeInsets.all(16),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        StreamBuilder<int?>(
+                                          stream: ref
+                                              .watch(projectsRepositoryProvider)
+                                              .watchProjectIcon(project.id),
+                                          builder: (context, iconSnap) {
+                                            final iconCodePoint = iconSnap.data;
+                                            final iconData = iconCodePoint != null
+                                                // ignore: non_const_argument_for_const_parameter
+                                                ? IconData(iconCodePoint,
+                                                    fontFamily: 'MaterialIcons')
+                                                : Icons.build_outlined;
 
-                                      return Tooltip(
-                                        message: theme.translate('change_icon'),
-                                        child: InkWell(
-                                          onTap: () {
-                                            PpIconPicker.show(
-                                              context: context,
-                                              theme: theme,
-                                              selectedIcon: iconData,
-                                              onSelect: (newIcon) async {
-                                                await ref
-                                                    .read(projectsRepositoryProvider)
-                                                    .setProjectIcon(project.id,
-                                                        newIcon.codePoint);
-                                                if (context.mounted) {
-                                                  AppSnackBar.show(
-                                                    context,
-                                                    message: theme.translate(
-                                                        'icon_updated_success'),
-                                                    type: SnackBarType.success,
+                                            return Tooltip(
+                                              message: theme.translate('change_icon'),
+                                              child: InkWell(
+                                                onTap: () {
+                                                  PpIconPicker.show(
+                                                    context: context,
+                                                    theme: theme,
+                                                    selectedIcon: iconData,
+                                                    onSelect: (newIcon) async {
+                                                      await ref
+                                                          .read(projectsRepositoryProvider)
+                                                          .setProjectIcon(project.id,
+                                                              newIcon.codePoint);
+                                                      if (context.mounted) {
+                                                        AppSnackBar.show(
+                                                          context,
+                                                          message: theme.translate(
+                                                              'icon_updated_success'),
+                                                          type: SnackBarType.success,
+                                                        );
+                                                      }
+                                                    },
                                                   );
-                                                }
-                                              },
-                                            );
-                                          },
-                                          borderRadius:
-                                              BorderRadius.circular(14),
-                                          child: Container(
-                                            padding: const EdgeInsets.all(10),
-                                            decoration: BoxDecoration(
-                                              color: theme.activeColor
-                                                  .withValues(alpha: 0.15),
-                                              borderRadius:
-                                                  BorderRadius.circular(14),
-                                              border: Border.all(
-                                                color: theme.activeColor
-                                                    .withValues(alpha: 0.3),
-                                                width: 1,
-                                              ),
-                                            ),
-                                            child: Stack(
-                                              clipBehavior: Clip.none,
-                                              children: [
-                                                Icon(
-                                                  iconData,
-                                                  color: theme.activeColor,
-                                                  size: 24,
-                                                ),
-                                                Positioned(
-                                                  right: -4,
-                                                  bottom: -4,
-                                                  child: Container(
-                                                    padding:
-                                                        const EdgeInsets.all(2),
-                                                    decoration: BoxDecoration(
-                                                      color: theme.activeColor,
-                                                      shape: BoxShape.circle,
-                                                    ),
-                                                    child: const Icon(
-                                                      Icons.edit,
-                                                      color: Colors.white,
-                                                      size: 8,
+                                                },
+                                                borderRadius:
+                                                    BorderRadius.circular(14),
+                                                child: Container(
+                                                  padding: const EdgeInsets.all(10),
+                                                  decoration: BoxDecoration(
+                                                    color: theme.activeColor
+                                                        .withValues(alpha: 0.15),
+                                                    borderRadius:
+                                                        BorderRadius.circular(14),
+                                                    border: Border.all(
+                                                      color: theme.activeColor
+                                                          .withValues(alpha: 0.3),
+                                                      width: 1,
                                                     ),
                                                   ),
+                                                  child: Stack(
+                                                    clipBehavior: Clip.none,
+                                                    children: [
+                                                      Icon(
+                                                        iconData,
+                                                        color: theme.activeColor,
+                                                        size: 24,
+                                                      ),
+                                                      Positioned(
+                                                        right: -4,
+                                                        bottom: -4,
+                                                        child: Container(
+                                                          padding:
+                                                              const EdgeInsets.all(2),
+                                                          decoration: BoxDecoration(
+                                                            color: theme.activeColor,
+                                                            shape: BoxShape.circle,
+                                                          ),
+                                                          child: const Icon(
+                                                            Icons.edit,
+                                                            color: Colors.white,
+                                                            size: 8,
+                                                          ),
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
                                                 ),
-                                              ],
+                                              ),
+                                            );
+                                          },
+                                        ),
+                                        const SizedBox(width: 12),
+                                        Expanded(
+                                          child: Padding(
+                                            padding: const EdgeInsetsDirectional.only(
+                                                end: 36),
+                                            child: Text(
+                                              project.name,
+                                              style: theme.textStyle(
+                                                fontSize: 18,
+                                                fontWeight: FontWeight.bold,
+                                                color: textPri,
+                                              ),
                                             ),
                                           ),
                                         ),
-                                      );
-                                    },
-                                  ),
-                                  const SizedBox(width: 12),
-                                  Expanded(
-                                    child: Text(
-                                      project.name,
-                                      style: theme.textStyle(
-                                        fontSize: 18,
-                                        fontWeight: FontWeight.bold,
-                                        color: textPri,
-                                      ),
+                                      ],
                                     ),
-                                  ),
-                                  PpBadge(
-                                    label: _getLocalizedStatus(project.status, theme),
-                                    variant: project.status == 'completed'
-                                        ? BadgeVariant.success
-                                        : (project.status == 'inProgress'
-                                              ? BadgeVariant.primary
-                                              : BadgeVariant.info),
-                                  ),
-                                ],
-                              ),
                               if (project.targetDate != null) ...[
                                 const SizedBox(height: 6),
                                 Row(
@@ -396,6 +405,17 @@ class ProjectDetailScreen extends ConsumerWidget {
                             ],
                           ),
                         ),
+                        PositionedDirectional(
+                          top: 0,
+                          end: 0,
+                          child: PpCornerRibbon.fromProjectStatus(
+                            project.status,
+                            theme,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                         const SizedBox(height: AppSpacing.lg),
 
                         // BOM Header
@@ -403,7 +423,7 @@ class ProjectDetailScreen extends ConsumerWidget {
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Text(
-                              theme.translate('projects_and_bom'),
+                              theme.translate('bill_of_materials_bom'),
                               style: theme.textStyle(fontSize: 16, fontWeight: FontWeight.w700, color: textPri),
                             ),
                             TextButton.icon(
@@ -648,23 +668,6 @@ class ProjectDetailScreen extends ConsumerWidget {
     );
   },
 );
-}
-
-  String _getLocalizedStatus(String status, ThemeProvider theme) {
-    switch (status) {
-      case 'completed':
-        return theme.translate('completed');
-      case 'inProgress':
-        return theme.translate('in_progress');
-      case 'planning':
-        return theme.translate('planning');
-      case 'onHold':
-        return theme.translate('on_hold');
-      case 'cancelled':
-        return theme.translate('cancelled');
-      default:
-        return status;
-    }
   }
 }
 

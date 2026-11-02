@@ -158,7 +158,6 @@ class _UseStockDialogState extends ConsumerState<UseStockDialog> {
   Widget build(BuildContext context) {
     final theme = ThemeProvider();
     final cardBg = theme.isDark ? AppColors.darkCard : AppColors.lightCard;
-    final cardBorder = theme.isDark ? AppColors.darkBorder : AppColors.lightBorder;
     final textPri = theme.isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary;
     final textSec = theme.isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary;
 
@@ -228,19 +227,19 @@ class _UseStockDialogState extends ConsumerState<UseStockDialog> {
                 if (widget.initialComponent != null) ...[
                   PpCard(
                     padding: const EdgeInsets.all(12),
-                    backgroundColor: theme.isDark ? const Color(0xFF1E2126) : const Color(0xFFF1F5F9),
-                    borderColor: cardBorder,
+                    backgroundColor: theme.secondaryColor,
+                    borderColor: theme.borderColor,
                     child: Row(
                       children: [
                         Container(
                           padding: const EdgeInsets.all(10),
                           decoration: BoxDecoration(
-                            color: theme.primaryColor.withValues(alpha: 0.15),
+                            color: theme.activeColor.withValues(alpha: 0.15),
                             borderRadius: AppSpacing.roundedSm,
                           ),
                           child: Icon(
                             Icons.memory,
-                            color: theme.primaryColor,
+                            color: theme.activeColor,
                             size: 24,
                           ),
                         ),

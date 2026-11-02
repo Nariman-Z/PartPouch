@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.1.0] - 2026-11-02
+
+### 🎨 UI & UX Refinements
+- **Corner Status Ribbons**: Added angled status ribbons (`PpCornerRibbon`) on project cards and project detail views displaying real-time status (Planning, In Progress, On Hold, Completed) with vibrant thematic colors.
+- **Component Card Bottom Line Cleanup**: Refined component cards to display piece counts and concise location codes (e.g., `8 pcs • Box 02`), stripping redundant descriptions.
+- **Project BOM Cards Redesign**: Overhauled BOM item cards in project detail view to match the component card architecture with category badges, full descriptions, footprint specs, stock readiness, and unit costs.
+- **DatePicker Surface & Dialog Theming**: Styled date selection fields and calendar picker dialogs to match PartPouch dark slate surface and accent color palette.
+- **Purchase Order Line Items Layout**: Separated category badges, component titles, descriptions, and footprint specs across dedicated lines to avoid text truncation on mobile viewports.
+- **Low Stock Alerts Layout**: Enhanced low stock list cards with dedicated category badges, full-width component titles, and compact action buttons.
+- **QR Scanner Viewport Polish**: Positioned alignment instructions as clean floating text and redesigned manual part lookup as a frosted glass pill.
+- **Dynamic Version Indicator**: Centralized app versioning in `AppConstants.appVersion` and updated the Settings screen to dynamically display the active version.
+
+---
+
 ## [1.0.0] - 2026-11-01
 
 ### 🚀 Initial Public Release

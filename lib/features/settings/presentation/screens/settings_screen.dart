@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:share_plus/share_plus.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/constants/app_constants.dart';
 import '../../../../core/theme/theme_provider.dart';
 import '../../../../core/utils/app_snackbar.dart';
 import '../../../../core/widgets/partpouch_logo_title.dart';
@@ -775,7 +776,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      'Version 1.0.0 • ${theme.translate('app_version_tag')}',
+                      'Version ${AppConstants.appVersion} • ${theme.translate('app_version_tag')}',
                       style: theme.textStyle(
                         fontSize: 12,
                         color: theme.subTextColor,

@@ -469,24 +469,22 @@ class ProjectDetailScreen extends ConsumerWidget {
                               final comp = item.component;
 
                               return PpCard(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 14,
-                                  vertical: 12,
-                                ),
+                                padding: const EdgeInsets.all(12),
                                 backgroundColor: cardBg,
                                 borderColor: cardBorder,
                                 child: Row(
-                                  crossAxisAlignment:
-                                      CrossAxisAlignment.center,
+                                  crossAxisAlignment: CrossAxisAlignment.center,
                                   children: [
                                     Container(
+                                      width: 44,
+                                      height: 44,
                                       padding: const EdgeInsets.all(8),
                                       decoration: BoxDecoration(
                                         color: CategoryColors.getContainerColor(
                                           comp.category,
                                           isDark: theme.isDark,
                                         ),
-                                        borderRadius: AppSpacing.roundedSm,
+                                        borderRadius: BorderRadius.circular(12),
                                         border: Border.all(
                                           color: CategoryColors.getColor(
                                             comp.category,
@@ -500,135 +498,155 @@ class ProjectDetailScreen extends ConsumerWidget {
                                           comp.category,
                                           isDark: theme.isDark,
                                         ),
-                                        size: 20,
+                                        size: 22,
                                       ),
                                     ),
                                     const SizedBox(width: 12),
                                     Expanded(
                                       child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        mainAxisSize: MainAxisSize.min,
+                                        crossAxisAlignment: CrossAxisAlignment.start,
                                         children: [
-                                          CategoryColors.buildTitleRichText(
-                                            name: comp.name,
-                                            category: comp.category,
-                                            textColor: textPri,
-                                            subTextColor: textSec,
-                                            fontSize: 14,
-                                            isPersian:
-                                                theme.currentLanguage ==
-                                                    'Persian',
+                                          // Line 1: Category Name in its color & Readiness Badge & Delete button
+                                          Row(
+                                            children: [
+                                              Text(
+                                                comp.category,
+                                                style: theme.textStyle(
+                                                  fontSize: 13,
+                                                  fontWeight: FontWeight.bold,
+                                                  color: CategoryColors.getColor(comp.category),
+                                                ),
+                                              ),
+                                              const Spacer(),
+                                              Container(
+                                                padding: const EdgeInsets.symmetric(
+                                                  horizontal: 8,
+                                                  vertical: 3,
+                                                ),
+                                                decoration: BoxDecoration(
+                                                  color: item.isSatisfied
+                                                      ? AppColors.successContainer
+                                                      : AppColors.errorContainer,
+                                                  borderRadius: AppSpacing.roundedSm,
+                                                  border: Border.all(
+                                                    color: item.isSatisfied
+                                                        ? AppColors.success
+                                                        : AppColors.error,
+                                                    width: 1,
+                                                  ),
+                                                ),
+                                                child: Text(
+                                                  '${theme.formatNumber(item.availableStock)} / ${theme.formatNumber(item.bom.quantityRequired)}',
+                                                  style: theme.textStyle(
+                                                    fontSize: 11,
+                                                    color: item.isSatisfied
+                                                        ? AppColors.success
+                                                        : AppColors.error,
+                                                    fontWeight: FontWeight.bold,
+                                                  ),
+                                                ),
+                                              ),
+                                              const SizedBox(width: 4),
+                                              IconButton(
+                                                icon: Icon(
+                                                  Icons.delete_outline,
+                                                  size: 18,
+                                                  color: textSec,
+                                                ),
+                                                padding: EdgeInsets.zero,
+                                                constraints: const BoxConstraints(
+                                                  minWidth: 28,
+                                                  minHeight: 28,
+                                                ),
+                                                tooltip: theme.translate('delete'),
+                                                onPressed: () async {
+                                                  await ref
+                                                      .read(projectsRepositoryProvider)
+                                                      .removeBomItem(item.bom.id);
+                                                },
+                                              ),
+                                            ],
                                           ),
+                                          const SizedBox(height: 2),
+                                          // Line 2: Component Name
+                                          Text(
+                                            comp.name,
+                                            style: theme.textStyle(
+                                              fontSize: 14,
+                                              fontWeight: FontWeight.w700,
+                                              color: textPri,
+                                            ),
+                                            maxLines: 2,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                          // Line 3: Description (if present)
+                                          if (comp.description != null &&
+                                              comp.description!.trim().isNotEmpty) ...[
+                                            const SizedBox(height: 2),
+                                            Text(
+                                              comp.description!,
+                                              style: theme.textStyle(
+                                                fontSize: 12,
+                                                color: textSec,
+                                              ),
+                                              maxLines: 2,
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                          ],
+                                          // Line 4: Package Footprint (if present)
                                           if (comp.packageFootprint != null &&
-                                              comp.packageFootprint!
-                                                  .trim()
-                                                  .isNotEmpty) ...[
-                                            const SizedBox(height: 3),
+                                              comp.packageFootprint!.trim().isNotEmpty) ...[
+                                            const SizedBox(height: 2),
                                             Text(
                                               comp.packageFootprint!,
-                                              maxLines: 1,
-                                              overflow:
-                                                  TextOverflow.ellipsis,
                                               style: theme.textStyle(
                                                 fontSize: 11.5,
                                                 fontWeight: FontWeight.w500,
                                                 color: textSec,
                                               ),
-                                            ),
-                                          ] else if (comp.description != null &&
-                                              comp.description!
-                                                  .trim()
-                                                  .isNotEmpty) ...[
-                                            const SizedBox(height: 3),
-                                            Text(
-                                              comp.description!,
                                               maxLines: 1,
-                                              overflow:
-                                                  TextOverflow.ellipsis,
-                                              style: theme.textStyle(
-                                                fontSize: 11.5,
-                                                color: textSec,
-                                              ),
+                                              overflow: TextOverflow.ellipsis,
                                             ),
                                           ],
-                                          if (item.shortage > 0) ...[
-                                            const SizedBox(height: 4),
-                                            Text(
-                                              '${theme.currentLanguage == 'Persian' ? 'کسری موجودی' : 'Shortage'}: ${theme.formatNumber(item.shortage)} ${comp.unitOfMeasure}',
-                                              style: theme.textStyle(
-                                                fontSize: 11,
-                                                color: AppColors.error,
-                                                fontWeight: FontWeight.bold,
-                                              ),
-                                            ),
-                                          ],
-                                        ],
-                                      ),
-                                    ),
-                                    // Required vs Available Badge & Line Cost
-                                    Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.end,
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.center,
-                                      children: [
-                                        Container(
-                                          padding: const EdgeInsets.symmetric(
-                                            horizontal: 10,
-                                            vertical: 4,
-                                          ),
-                                          decoration: BoxDecoration(
-                                            color: item.isSatisfied
-                                                ? AppColors.successContainer
-                                                : AppColors.errorContainer,
-                                            borderRadius: AppSpacing.roundedSm,
-                                            border: Border.all(
-                                              color: item.isSatisfied
-                                                  ? AppColors.success
-                                                  : AppColors.error,
-                                              width: 1,
-                                            ),
-                                          ),
-                                          child: Text(
-                                            '${theme.formatNumber(item.availableStock)} / ${theme.formatNumber(item.bom.quantityRequired)}',
-                                            style: theme.textStyle(
-                                              fontSize: 11,
-                                              color: item.isSatisfied
-                                                  ? AppColors.success
-                                                  : AppColors.error,
-                                              fontWeight: FontWeight.bold,
-                                            ),
-                                          ),
-                                        ),
-                                        if (item.estimatedCostCents > 0) ...[
-                                          const SizedBox(height: 3),
-                                          Text(
-                                            CurrencyFormatter.formatCents(
-                                              item.estimatedCostCents,
-                                            ),
-                                            style: theme.textStyle(
-                                              fontSize: 11,
-                                              color: theme.activeColor,
-                                              fontWeight: FontWeight.w700,
-                                            ),
+                                          const SizedBox(height: 4),
+                                          // Line 5: Shortage / Required on left, Cost on right
+                                          Row(
+                                            children: [
+                                              if (item.shortage > 0)
+                                                Text(
+                                                  '${theme.currentLanguage == 'Persian' ? 'کسری موجودی' : 'Shortage'}: ${theme.formatNumber(item.shortage)} ${comp.unitOfMeasure}',
+                                                  style: theme.textStyle(
+                                                    fontSize: 11.5,
+                                                    color: AppColors.error,
+                                                    fontWeight: FontWeight.bold,
+                                                  ),
+                                                )
+                                              else
+                                                Text(
+                                                  '${theme.translate('required_parts')}: ${theme.formatNumber(item.bom.quantityRequired)} ${comp.unitOfMeasure}',
+                                                  style: theme.textStyle(
+                                                    fontSize: 11.5,
+                                                    color: textSec,
+                                                    fontWeight: FontWeight.w600,
+                                                  ),
+                                                ),
+                                              const Spacer(),
+                                              if (item.estimatedCostCents > 0)
+                                                Text(
+                                                  CurrencyFormatter.formatCents(
+                                                    item.estimatedCostCents,
+                                                    compact: true,
+                                                  ),
+                                                  style: theme.textStyle(
+                                                    fontSize: 12,
+                                                    fontWeight: FontWeight.bold,
+                                                    color: theme.activeColor,
+                                                  ),
+                                                ),
+                                            ],
                                           ),
                                         ],
-                                      ],
-                                    ),
-                                    const SizedBox(width: 4),
-                                    IconButton(
-                                      icon: Icon(
-                                        Icons.delete_outline,
-                                        size: 18,
-                                        color: textSec,
                                       ),
-                                      tooltip: theme.translate('delete'),
-                                      onPressed: () async {
-                                        await ref
-                                            .read(projectsRepositoryProvider)
-                                            .removeBomItem(item.bom.id);
-                                      },
                                     ),
                                   ],
                                 ),
@@ -1311,6 +1329,8 @@ class _EditProjectDialogState extends ConsumerState<_EditProjectDialog> {
                         DateTime.now().add(const Duration(days: 30)),
                     firstDate: DateTime(2020),
                     lastDate: DateTime(2100),
+                    builder: (context, child) =>
+                        _buildDatePickerTheme(context, child!, theme),
                   );
                   if (picked != null) {
                     setState(() => _targetDate = picked);
@@ -1321,9 +1341,13 @@ class _EditProjectDialogState extends ConsumerState<_EditProjectDialog> {
                   padding:
                       const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                   decoration: BoxDecoration(
-                    color: theme.primaryColor,
+                    color: theme.elevatedColor,
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: theme.borderColor),
+                    border: Border.all(
+                      color: _targetDate != null
+                          ? theme.activeColor.withValues(alpha: 0.5)
+                          : theme.borderColor,
+                    ),
                   ),
                   child: Row(
                     children: [
@@ -1421,6 +1445,62 @@ class _EditProjectDialogState extends ConsumerState<_EditProjectDialog> {
           ],
         ),
       ],
+    );
+  }
+
+  Widget _buildDatePickerTheme(
+    BuildContext context,
+    Widget child,
+    ThemeProvider theme,
+  ) {
+    return Theme(
+      data: Theme.of(context).copyWith(
+        colorScheme: theme.isDark
+            ? ColorScheme.dark(
+                primary: theme.activeColor,
+                onPrimary: Colors.white,
+                surface: theme.secondaryColor,
+                onSurface: theme.textColor,
+                surfaceContainerHighest: theme.elevatedColor,
+              )
+            : ColorScheme.light(
+                primary: theme.activeColor,
+                onPrimary: Colors.white,
+                surface: theme.secondaryColor,
+                onSurface: theme.textColor,
+                surfaceContainerHighest: theme.elevatedColor,
+              ),
+        datePickerTheme: DatePickerThemeData(
+          backgroundColor: theme.secondaryColor,
+          headerBackgroundColor: theme.secondaryColor,
+          headerForegroundColor: theme.textColor,
+          surfaceTintColor: Colors.transparent,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(24),
+            side: BorderSide(color: theme.borderColor),
+          ),
+          dayForegroundColor: WidgetStateProperty.resolveWith((states) {
+            if (states.contains(WidgetState.selected)) return Colors.white;
+            if (states.contains(WidgetState.disabled)) {
+              return theme.subTextColor.withValues(alpha: 0.4);
+            }
+            return theme.textColor;
+          }),
+          dayBackgroundColor: WidgetStateProperty.resolveWith((states) {
+            if (states.contains(WidgetState.selected)) return theme.activeColor;
+            return null;
+          }),
+          todayForegroundColor: WidgetStateProperty.all(theme.activeColor),
+          todayBorder: BorderSide(color: theme.activeColor, width: 1.5),
+          cancelButtonStyle: ButtonStyle(
+            foregroundColor: WidgetStateProperty.all(theme.subTextColor),
+          ),
+          confirmButtonStyle: ButtonStyle(
+            foregroundColor: WidgetStateProperty.all(theme.activeColor),
+          ),
+        ),
+      ),
+      child: child,
     );
   }
 }

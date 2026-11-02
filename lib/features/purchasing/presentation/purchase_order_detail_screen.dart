@@ -272,15 +272,42 @@ class PurchaseOrderDetailScreen extends ConsumerWidget {
                                     crossAxisAlignment:
                                         CrossAxisAlignment.start,
                                     children: [
-                                      CategoryColors.buildTitleRichText(
-                                        name: comp.name,
-                                        category: comp.category,
-                                        textColor: theme.textColor,
-                                        subTextColor: theme.subTextColor,
-                                        fontSize: 14,
-                                        isPersian:
-                                            theme.currentLanguage == 'Persian',
+                                      Text(
+                                        comp.category,
+                                        style: theme.textStyle(
+                                          fontSize: 13,
+                                          fontWeight: FontWeight.bold,
+                                          color: CategoryColors.getColor(
+                                            comp.category,
+                                          ),
+                                        ),
                                       ),
+                                      const SizedBox(height: 2),
+                                      Text(
+                                        comp.name,
+                                        style: theme.textStyle(
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.bold,
+                                          color: theme.textColor,
+                                        ),
+                                        maxLines: 2,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                      if (comp.description != null &&
+                                          comp.description!
+                                              .trim()
+                                              .isNotEmpty) ...[
+                                        const SizedBox(height: 2),
+                                        Text(
+                                          comp.description!,
+                                          style: theme.textStyle(
+                                            fontSize: 12,
+                                            color: theme.subTextColor,
+                                          ),
+                                          maxLines: 2,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ],
                                       const SizedBox(height: 3),
                                       Text(
                                         '${comp.packageFootprint != null && comp.packageFootprint!.trim().isNotEmpty ? '${comp.packageFootprint!} • ' : ''}${theme.translate('unit_cost')}: ${CurrencyFormatter.formatCents(item.unitCostCents)}',

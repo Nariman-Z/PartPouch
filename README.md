@@ -6,7 +6,7 @@
 
 <!--Title-->
 <p align="center">
-  <b>PartPouch - Offline-First Electronic Component & Workshop Inventory Manager (v1.0)</b>
+  <b>PartPouch - Offline-First Electronic Component & Workshop Inventory Manager (v1.1)</b>
   <br> <small> <i>- A precision-engineered mobile inventory system with real-time stock balances, multi-location storage hierarchies, project BOM kitting, stocktaking audits, QR code labeling, and automated CI/CD releases -</i> </small> <br>
 </p> 
 
@@ -15,7 +15,7 @@
 ## 📌 Project Status
 
 > [!NOTE]
-> **PartPouch Mobile Inventory Ecosystem (v1.0.0)**  
+> **PartPouch Mobile Inventory Ecosystem (v1.1.0)**  
 > This repository contains the complete open-source PartPouch mobile application built with **Flutter 3**, **Riverpod**, and **Drift (SQLite)**. It is fully offline-first, supports dual-language localization (English & Persian), features QR code scanning and label generation, and builds automatically via GitHub Actions CI/CD.
 
 ---
@@ -210,16 +210,16 @@ flutter run
 PartPouch includes a high-performance **GitHub Actions** release workflow located at `.github/workflows/release.yml`.
 
 ### Automated Release Workflow
-When a new version tag (e.g. `v1.0.0`) is pushed to GitHub:
+When a new version tag (e.g. `v1.1.0`) is pushed to GitHub:
 1. **Runner Environment:** Spins up an `ubuntu-latest` runner with Java 17 and Flutter SDK caching.
 2. **Analysis & Testing:** Executes static analysis (`flutter analyze`) and unit test suites (`flutter test`).
 3. **Optimized Compilation:** Builds a standalone release APK (`flutter build apk --release`).
-4. **Automated GitHub Release:** Publishes a new release asset `PartPouch-v1.0.0.apk` attached directly to the GitHub tag release notes.
+4. **Automated GitHub Release:** Publishes a new release asset `PartPouch-v1.1.0.apk` attached directly to the GitHub tag release notes.
 
 To trigger a release manually:
 ```bash
-git tag -a v1.0.0 -m "Release version 1.0.0"
-git push origin v1.0.0
+git tag -a v1.1.0 -m "Release version 1.1.0"
+git push origin v1.1.0
 ```
 
 ---

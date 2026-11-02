@@ -95,6 +95,13 @@ class InventoryRepository {
         final locNames = nonZeroBalances
             .map((b) => locationMap[b.locationId])
             .whereType<String>()
+            .map((name) {
+              // Extract concise location code/identifier (e.g. "Box 02 - OLED & LCD Displays" -> "Box 02")
+              final parts = name.split(RegExp(r'\s*[-–—]\s*'));
+              return parts.isNotEmpty && parts.first.trim().isNotEmpty
+                  ? parts.first.trim()
+                  : name;
+            })
             .toList();
         final locationDisplay = locNames.join(', ');
 

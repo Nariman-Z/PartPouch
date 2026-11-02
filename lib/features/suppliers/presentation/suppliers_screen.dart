@@ -190,7 +190,7 @@ class _SuppliersScreenState extends ConsumerState<SuppliersScreen> {
                         .importSuppliersFromJson(text);
                     if (mounted) {
                       AppSnackBar.show(
-                        context,
+                        this.context,
                         message: theme.currentLanguage == 'Persian'
                             ? '${theme.formatNumber(count)} تأمین‌کننده با موفقیت وارد شدند.'
                             : '$count vendors imported successfully.',
@@ -200,7 +200,7 @@ class _SuppliersScreenState extends ConsumerState<SuppliersScreen> {
                   } catch (e) {
                     if (mounted) {
                       AppSnackBar.show(
-                        context,
+                        this.context,
                         message: 'Import failed: ${e.toString()}',
                         type: SnackBarType.error,
                       );

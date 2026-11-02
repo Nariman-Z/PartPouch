@@ -111,18 +111,47 @@ class LowStockScreen extends ConsumerWidget {
                                       crossAxisAlignment: CrossAxisAlignment.start,
                                       mainAxisSize: MainAxisSize.min,
                                       children: [
-                                        CategoryColors.buildTitleRichText(
-                                          name: comp.name,
-                                          category: comp.category,
-                                          textColor: theme.textColor,
-                                          subTextColor: theme.subTextColor,
-                                          fontSize: 14,
-                                          isPersian:
-                                              theme.currentLanguage == 'Persian',
+                                        Text(
+                                          comp.category,
+                                          style: theme.textStyle(
+                                            fontSize: 13,
+                                            fontWeight: FontWeight.bold,
+                                            color: CategoryColors.getColor(
+                                              comp.category,
+                                            ),
+                                          ),
                                         ),
+                                        const SizedBox(height: 2),
+                                        Text(
+                                          comp.name,
+                                          style: theme.textStyle(
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.bold,
+                                            color: theme.textColor,
+                                          ),
+                                          maxLines: 2,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                        if (comp.description != null &&
+                                            comp.description!
+                                                .trim()
+                                                .isNotEmpty) ...[
+                                          const SizedBox(height: 2),
+                                          Text(
+                                            comp.description!,
+                                            style: theme.textStyle(
+                                              fontSize: 12,
+                                              color: theme.subTextColor,
+                                            ),
+                                            maxLines: 2,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                        ],
                                         if (comp.packageFootprint != null &&
-                                            comp.packageFootprint!.trim().isNotEmpty) ...[
-                                          const SizedBox(height: 3),
+                                            comp.packageFootprint!
+                                                .trim()
+                                                .isNotEmpty) ...[
+                                          const SizedBox(height: 2),
                                           Text(
                                             comp.packageFootprint!,
                                             style: theme.textStyle(
@@ -134,8 +163,10 @@ class LowStockScreen extends ConsumerWidget {
                                             overflow: TextOverflow.ellipsis,
                                           ),
                                         ] else if (comp.internalSku != null &&
-                                            comp.internalSku!.trim().isNotEmpty) ...[
-                                          const SizedBox(height: 3),
+                                            comp.internalSku!
+                                                .trim()
+                                                .isNotEmpty) ...[
+                                          const SizedBox(height: 2),
                                           Text(
                                             comp.internalSku!,
                                             style: theme.textStyle(
@@ -150,7 +181,7 @@ class LowStockScreen extends ConsumerWidget {
                                         Text(
                                           '${theme.translate('quantity')}: ${theme.formatNumber(item.totalStock)} / ${theme.formatNumber(comp.minStockThreshold)} ${comp.unitOfMeasure}',
                                           style: theme.textStyle(
-                                            fontSize: 11,
+                                            fontSize: 11.5,
                                             color: item.isOutOfStock
                                                 ? AppColors.error
                                                 : AppColors.warning,
@@ -160,8 +191,9 @@ class LowStockScreen extends ConsumerWidget {
                                       ],
                                     ),
                                   ),
+                                  const SizedBox(width: 8),
                                   PpButton(
-                                    label: theme.translate('receive_stock'),
+                                    label: theme.translate('receive'),
                                     height: 36,
                                     fullWidth: false,
                                     icon: Icons.download_rounded,

@@ -471,35 +471,60 @@ class _QrScannerScreenState extends ConsumerState<QrScannerScreen>
                     ),
                   ),
                 ],
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 8,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Colors.black.withValues(alpha: 0.45),
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(
-                      color: Colors.white.withValues(alpha: 0.12),
-                      width: 1,
-                    ),
-                  ),
-                  child: Text(
-                    theme.translate('qr_align_hint'),
-                    textAlign: TextAlign.center,
-                    style: theme.textStyle(
-                      color: Colors.white.withValues(alpha: 0.9),
-                      fontSize: 13,
-                      fontWeight: FontWeight.w500,
-                    ),
+                Text(
+                  theme.translate('qr_align_hint'),
+                  textAlign: TextAlign.center,
+                  style: theme.textStyle(
+                    color: Colors.white.withValues(alpha: 0.92),
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
+                  ).copyWith(
+                    shadows: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.7),
+                        blurRadius: 4,
+                        offset: const Offset(0, 1),
+                      ),
+                    ],
                   ),
                 ),
                 const SizedBox(height: 16),
-                PpButton(
-                  label: theme.translate('manual_lookup'),
-                  variant: PpButtonVariant.secondary,
-                  icon: Icons.keyboard_outlined,
-                  onPressed: _showManualEntryDialog,
+                InkWell(
+                  onTap: _showManualEntryDialog,
+                  borderRadius: BorderRadius.circular(20),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 18,
+                      vertical: 9,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withValues(alpha: 0.45),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color: Colors.white.withValues(alpha: 0.15),
+                        width: 1,
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(
+                          Icons.keyboard_outlined,
+                          size: 18,
+                          color: Colors.white,
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          theme.translate('manual_lookup'),
+                          style: theme.textStyle(
+                            color: Colors.white,
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
               ],
             ),

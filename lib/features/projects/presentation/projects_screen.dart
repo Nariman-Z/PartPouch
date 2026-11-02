@@ -600,6 +600,7 @@ class _AddProjectDialogState extends ConsumerState<_AddProjectDialog> {
                     initialDate: _targetDate ?? DateTime.now().add(const Duration(days: 30)),
                     firstDate: DateTime(2020),
                     lastDate: DateTime(2100),
+                    builder: (context, child) => _buildDatePickerTheme(context, child!, theme),
                   );
                   if (picked != null) {
                     setState(() => _targetDate = picked);
@@ -609,9 +610,13 @@ class _AddProjectDialogState extends ConsumerState<_AddProjectDialog> {
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                   decoration: BoxDecoration(
-                    color: theme.primaryColor,
+                    color: theme.elevatedColor,
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: theme.borderColor),
+                    border: Border.all(
+                      color: _targetDate != null
+                          ? theme.activeColor.withValues(alpha: 0.5)
+                          : theme.borderColor,
+                    ),
                   ),
                   child: Row(
                     children: [
@@ -704,6 +709,62 @@ class _AddProjectDialogState extends ConsumerState<_AddProjectDialog> {
           ],
         ),
       ],
+    );
+  }
+
+  Widget _buildDatePickerTheme(
+    BuildContext context,
+    Widget child,
+    ThemeProvider theme,
+  ) {
+    return Theme(
+      data: Theme.of(context).copyWith(
+        colorScheme: theme.isDark
+            ? ColorScheme.dark(
+                primary: theme.activeColor,
+                onPrimary: Colors.white,
+                surface: theme.secondaryColor,
+                onSurface: theme.textColor,
+                surfaceContainerHighest: theme.elevatedColor,
+              )
+            : ColorScheme.light(
+                primary: theme.activeColor,
+                onPrimary: Colors.white,
+                surface: theme.secondaryColor,
+                onSurface: theme.textColor,
+                surfaceContainerHighest: theme.elevatedColor,
+              ),
+        datePickerTheme: DatePickerThemeData(
+          backgroundColor: theme.secondaryColor,
+          headerBackgroundColor: theme.secondaryColor,
+          headerForegroundColor: theme.textColor,
+          surfaceTintColor: Colors.transparent,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(24),
+            side: BorderSide(color: theme.borderColor),
+          ),
+          dayForegroundColor: WidgetStateProperty.resolveWith((states) {
+            if (states.contains(WidgetState.selected)) return Colors.white;
+            if (states.contains(WidgetState.disabled)) {
+              return theme.subTextColor.withValues(alpha: 0.4);
+            }
+            return theme.textColor;
+          }),
+          dayBackgroundColor: WidgetStateProperty.resolveWith((states) {
+            if (states.contains(WidgetState.selected)) return theme.activeColor;
+            return null;
+          }),
+          todayForegroundColor: WidgetStateProperty.all(theme.activeColor),
+          todayBorder: BorderSide(color: theme.activeColor, width: 1.5),
+          cancelButtonStyle: ButtonStyle(
+            foregroundColor: WidgetStateProperty.all(theme.subTextColor),
+          ),
+          confirmButtonStyle: ButtonStyle(
+            foregroundColor: WidgetStateProperty.all(theme.activeColor),
+          ),
+        ),
+      ),
+      child: child,
     );
   }
 }

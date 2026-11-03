@@ -10,71 +10,144 @@
   <br> <small> <i>- A precision-engineered mobile inventory system with real-time stock balances, multi-location storage hierarchies, project BOM kitting, stocktaking audits, QR code labeling, and automated CI/CD releases -</i> </small> <br>
 </p> 
 
+<p align="center">
+  <a href="https://flutter.dev"><img src="https://img.shields.io/badge/Flutter-3.x-02569B?logo=flutter&logoColor=white&style=flat-square" alt="Flutter 3"></a>
+  <a href="https://dart.dev"><img src="https://img.shields.io/badge/Dart-3.x-0175C2?logo=dart&logoColor=white&style=flat-square" alt="Dart 3"></a>
+  <a href="https://drift.simonbinder.eu/"><img src="https://img.shields.io/badge/Database-Drift%20SQLite-003B57?logo=sqlite&logoColor=white&style=flat-square" alt="Drift SQLite"></a>
+  <img src="https://img.shields.io/badge/Architecture-Offline--First-10B981?style=flat-square" alt="Offline-First">
+  <img src="https://img.shields.io/badge/Platform-Android-3DDC84?logo=android&logoColor=white&style=flat-square" alt="Android">
+  <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-blue?style=flat-square" alt="License"></a>
+  <img src="https://img.shields.io/badge/PRs-Welcome-brightgreen?style=flat-square" alt="PRs Welcome">
+</p>
+
 ---
 
 ## 📌 Project Status
 
 > [!NOTE]
 > **PartPouch Mobile Inventory Ecosystem (v1.1.0)**  
-> This repository contains the complete open-source PartPouch mobile application built with **Flutter 3**, **Riverpod**, and **Drift (SQLite)**. It is fully offline-first, supports dual-language localization (English & Persian), features QR code scanning and label generation, and builds automatically via GitHub Actions CI/CD.
+> This repository contains the complete open-source PartPouch mobile application built with **Flutter 3**, **Riverpod**, and **Drift (SQLite)**. It is fully offline-first, supports dual-language localization (English & Persian), features QR code scanning and label generation, and operates with zero external server dependencies.
 
 ---
 
-## 🔧 Introduction
-**PartPouch** is a comprehensive, production-grade mobile inventory management platform tailored for electronics engineers, hardware startups, maker spaces, and repair technicians. Managing thousands of microscopic surface-mount components (0805/0603 resistors, IC packages, microcontrollers, sensors, passive components) across drawers, bins, and rooms requires absolute accuracy and zero latency.
+## 💡 The Problem & The Solution
 
-PartPouch eliminates missing components and stockout delays by unifying:
-- **Offline-First SQLite Engine:** High-performance local relational database powered by Drift.
-- **Multi-Level Storage Hierarchy:** Sub-location mapping down to room, rack, shelf, drawer, and bin codes.
-- **Stock Movement Auditing:** Transaction ledger logging every receipt, usage, transfer, and adjustment with cost calculations.
-- **Project Bill of Materials (BOM) Kitting:** Grouping required parts per project assembly with automatic stock availability validation.
-- **Vendor & Purchase Order Management:** Full lifecycle tracking from vendor quote drafts to incoming shipment receipts.
-- **QR Code Scanner & Label Generator:** On-device camera scanning for rapid identification and printable QR payload generation.
-- **Multilingual & Neumorphic UI:** Modern Material 3 interface with dark/light themes and Persian Vazirmatn typography support.
+Every hardware engineer, maker, and prototyping lab eventually hits the same roadblock: **inventory chaos**.
 
----
+* ⚠️ **Spreadsheets fail fast:** Static spreadsheets don't scan QR codes, can't represent physical bin sub-locations, and inevitably fall out of sync during late-night soldering sessions.
+* ⚠️ **Cloud tools introduce latency & risk:** Cloud ERP systems require continuous internet, impose subscription paywalls, and crawl to a halt inside metal RF-shielded workshops, basement labs, or remote makerspaces.
+* ⚠️ **Small parts, catastrophic delays:** Misplacing a single \$0.05 10kΩ 0603 resistor or running out of STM32 microcontrollers unexpectedly can stall an entire production run.
 
-## 🚀 Key Features
-| Operational Vector | Functional Characteristics |
-|-------------------|--------------------------------------------------------------------------|
-| **Component Database** | Categorized part cataloging • Datasheet URL linking • Package footprints • Internal SKUs • Min stock alerts |
-| **Storage Hierarchy** | Multi-tiered location trees (Warehouse ➔ Room ➔ Rack ➔ Drawer ➔ Bin) • Location code indexing |
-| **Stock Ledger** | Four transaction modes (Receive, Use, Transfer, Adjust) • Historical movements audit log • Unit cost tracking |
-| **Project BOMs** | Assembly BOM builder • Stock reserve checking • Kitting allocation • Required vs Available status |
-| **Purchase Orders** | Supplier relationship management • Order status pipeline (Draft ➔ Ordered ➔ Received) • Batch receipt import |
-| **Stocktaking** | Cycle counting sessions • Reconciliation variance calculation • Audit approval workflows |
-| **QR Code Scanner** | Camera-based barcode/QR scanner • Instant part lookup • Custom QR label code generation |
-| **Analytics & Backup**| Interactive stock value charts (FL Chart) • Full JSON export/import backup • Demo data loader (`demo.json`) |
-| **Localization & Theme**| Dual-language support (English & Persian) • Vazirmatn Google Font integration • Custom accent color picker |
+### 🛡️ The PartPouch Engineering Philosophy
+**PartPouch** treats physical component management with the rigor of an engineering toolchain:
+1. **Zero Latency, 100% Local:** Everything lives in a local, transactional SQLite database with reactive Drift streams. No spinners, no cloud downtime, zero tracking.
+2. **Granular Physical Topologies:** Map components down to the exact physical slot: `Workshop ➔ Cabinet B ➔ Rack 3 ➔ Drawer 12 ➔ Bin 4`.
+3. **Audited Stock Ledger:** Every resistor received, consumed, or moved is committed to an immutable transaction ledger with unit cost tracking.
+4. **Assembly-Ready BOM Kitting:** Know before heating up your soldering iron whether your warehouse has enough stock to build 5, 20, or 100 units of your PCB project.
 
 ---
 
-## 💻 Tech Stack & System Architecture
+## ✨ Core Pillars & Capabilities
 
-```text
-Flutter Presentation Layer (lib/features/*)
-        |
-        |  (Riverpod State Providers & GoRouter)
-        v
-Data Repositories & Services (lib/features/*/data)
-        |
-        |  (Type-Safe Reactive Queries)
-        v
-Drift SQLite Database Engine (lib/core/database)
-        |
-        |  (Local File System / Encrypted SQL Storage)
-        v
-Device Hardware (Camera / Local Storage / QR Engine)
+### 🗄️ Multi-Tiered Storage Topology
+* Model arbitrary physical spaces with parent-child location trees: *Building ➔ Room ➔ Rack ➔ Shelf ➔ Drawer ➔ Compartment*.
+* Instant location code indexing for rapid bin identification during assembly.
+* Complete visibility into all components sharing any given physical storage bin.
+
+### 📜 Financial & Stock Movement Ledger
+* **Four Dedicated Movement Vectors:**
+  - 📥 **Receive:** Log inbound shipments, suppliers, batch quantities, and purchase prices.
+  - 📤 **Use / Consume:** Deduct parts for breadboarding, prototype assemblies, or production runs.
+  - 🔄 **Transfer:** Reallocate components between bins with preserved audit history.
+  - ⚖️ **Adjust:** Correct counts following physical audits with tracked discrepancy notes.
+* Chronological activity trail with automatic unit cost calculation.
+
+### 🧩 Project BOMs & Kitting Verification
+* Build comprehensive Bill of Materials (BOM) for hardware projects and PCB revisions.
+* Real-time kitting engine checks warehouse inventory against required build quantities.
+* Clear visual shortage alerts highlight exactly what needs to be ordered before production starts.
+
+### 📷 Integrated QR Engine & Label Printing
+* **Instant Camera Scanner:** Point your phone camera at any component QR code to open its live spec and stock screen in milliseconds.
+* **On-Device Label Generator:** Render high-density QR payload codes for your component bins, SMD tape reels, and anti-static pouches.
+
+### 📋 Cycle Counts & Stocktake Audits
+* Conduct structured stocktaking sessions for specific rooms, shelves, or categories.
+* Compares physical counts against system records in real time, calculating positive/negative variances.
+* One-tap atomic reconciliation syncs database balances with actual inventory.
+
+### 🌐 Bilingual Typography & Modern Theming
+* Native **English** and **Persian (Farsi)** localization with full RTL (Right-to-Left) layout parity.
+* Powered by the specialized **Vazirmatn** font family with 9 distinct weight cuts (Thin to Black).
+* Seamless Material 3 Dark / Light modes and custom accent color selection.
+
+---
+
+## 🏛️ System Architecture
+
+PartPouch is structured following clean domain-driven Flutter principles with unidirectional data flow and reactive database streams:
+
+```mermaid
+flowchart TD
+    subgraph UI ["📱 Presentation Layer (Flutter 3)"]
+        Screens["Feature Screens & Modals"]
+        Theme["Theme & Localization Engine"]
+        Router["GoRouter Declarative Routes"]
+    end
+
+    subgraph State ["⚡ State Management (Riverpod 3)"]
+        Providers["Feature StateNotifier / AsyncNotifier"]
+        Streams["Reactive Stream Watchers"]
+    end
+
+    subgraph Domain ["⚙️ Business & Domain Logic"]
+        Ledger["Stock Movement & Ledger Engine"]
+        BOM["Project BOM & Kitting Evaluator"]
+        Stocktake["Stocktaking & Variance Reconciliation"]
+    end
+
+    subgraph Data ["💾 Data Access & Persistence"]
+        Repos["Type-Safe Feature Repositories"]
+        Drift["Drift SQLite ORM (Reactive DAOs)"]
+        DB[("Local SQLite Database (Offline)")]
+    end
+
+    subgraph Hardware ["🔌 Hardware & System Services"]
+        Camera["Camera / Barcode Engine (Mobile Scanner)"]
+        Storage["JSON File Export / Import Service"]
+    end
+
+    Screens --> Providers
+    Theme --> Screens
+    Router --> Screens
+    Providers --> Repos
+    Streams --> Repos
+    Repos --> Ledger
+    Repos --> BOM
+    Repos --> Stocktake
+    Ledger --> Drift
+    BOM --> Drift
+    Stocktake --> Drift
+    Drift --> DB
+    Camera --> Repos
+    Storage --> Repos
 ```
 
-### Core Technologies
-- **Framework:** [Flutter 3.x](https://flutter.dev/) (Dart 3)
-- **State Management:** [Flutter Riverpod 3.x](https://riverpod.dev/)
-- **Database Engine:** [Drift (SQLite)](https://drift.simonbinder.eu/) with reactive streams & migrations
-- **Navigation:** [GoRouter 17.x](https://pub.dev/packages/go_router)
-- **Visual Analytics:** [FL Chart 1.x](https://pub.dev/packages/fl_chart)
-- **Hardware Integrations:** [Mobile Scanner](https://pub.dev/packages/mobile_scanner) & [QR Flutter](https://pub.dev/packages/qr_flutter)
-- **Typography:** Custom Vazirmatn font weight spectrum (100 to 900) for clean bilingual text rendering
+---
+
+## 🚀 Key Feature Matrix
+
+| Domain Vector | Technical & Functional Capabilities |
+| :--- | :--- |
+| **Component Catalog** | Multi-category filtering • MPN & internal SKU indexing • Footprint / package metadata (0805, QFN, SOIC) • Live datasheet URL integration • Low-stock threshold alerts |
+| **Storage Hierarchy** | Unlimited multi-tier location tree (`Room ➔ Rack ➔ Shelf ➔ Drawer ➔ Bin`) • Fast location code lookup • Bin occupancy visualization |
+| **Stock Ledger** | 4 atomic transaction modes (Receive, Use, Transfer, Adjust) • Chronological audit trails • Unit cost logging & stock valuation |
+| **Project BOMs** | Assembly BOM builder • Component reservation check • Shortfall calculator • One-touch kitting status validation |
+| **Purchase Orders** | Vendor relationship manager • PO pipeline (`Draft ➔ Ordered ➔ Received`) • Bulk receipt importing directly into bins |
+| **Stocktake Audits** | Targeted cycle counting sessions • Real-time variance & discrepancy calculations • One-tap reconciliation |
+| **Hardware Scanner** | On-device high-performance camera barcode/QR scanner • Fast component jump • Printable QR label generator |
+| **Analytics & Backup** | Interactive financial & category distribution charts (FL Chart) • Atomic JSON backup & restore • One-click `demo.json` seed loader |
+| **Theming & i18n** | True Dark & Light modes • Hex accent color picker • Full English & Persian (Farsi) translation with Vazirmatn typography |
 
 ---
 
@@ -176,11 +249,12 @@ PartPouch/
 ## 🛠️ Local Development & Setup
 
 ### Prerequisites
-- [Flutter SDK](https://docs.flutter.dev/get-started/install) (v3.12+ recommended)
-- [Android Studio](https://developer.android.com/studio) or VS Code with Flutter extension
-- Java JDK 17
+* **[Flutter SDK](https://docs.flutter.dev/get-started/install)** (v3.12+ / stable)
+* **[Dart SDK](https://dart.dev/get-dart)** (v3.x bundled with Flutter)
+* **Java JDK 17** (Temurin or Zulu recommended)
+* **Android Studio** or **VS Code** with Flutter and Dart extensions
 
-### Quick Start Commands
+### Step-by-Step Setup
 
 ```bash
 # 1. Clone the repository
@@ -190,37 +264,21 @@ cd PartPouch
 # 2. Install dependencies
 flutter pub get
 
-# 3. Generate Drift database models & code files
+# 3. Generate Drift database models, DAOs & boilerplate
 dart run build_runner build --delete-conflicting-outputs
 
 # 4. Generate app launcher icons
 dart run flutter_launcher_icons
 
-# 5. Run tests
+# 5. Execute automated test suites
 flutter test
 
-# 6. Launch application on connected device or emulator
+# 6. Run on connected Android device or emulator
 flutter run
 ```
 
----
-
-## ⚡ CI/CD & Automated Release Pipeline
-
-PartPouch includes a high-performance **GitHub Actions** release workflow located at `.github/workflows/release.yml`.
-
-### Automated Release Workflow
-When a new version tag (e.g. `v1.1.0`) is pushed to GitHub:
-1. **Runner Environment:** Spins up an `ubuntu-latest` runner with Java 17 and Flutter SDK caching.
-2. **Analysis & Testing:** Executes static analysis (`flutter analyze`) and unit test suites (`flutter test`).
-3. **Optimized Compilation:** Builds a standalone release APK (`flutter build apk --release`).
-4. **Automated GitHub Release:** Publishes a new release asset `PartPouch-v1.1.0.apk` attached directly to the GitHub tag release notes.
-
-To trigger a release manually:
-```bash
-git tag -a v1.1.0 -m "Release version 1.1.0"
-git push origin v1.1.0
-```
+> [!TIP]
+> Whenever database tables or queries in `lib/core/database/` are modified, re-run `dart run build_runner build --delete-conflicting-outputs` to regenerate the type-safe Drift bindings.
 
 ---
 
@@ -230,13 +288,8 @@ Contributions, bug reports, and feature proposals are warmly welcomed! Please re
 
 ---
 
-## ⚠️ Disclaimer
-
-PartPouch is provided "as is" without warranty of any kind. It is designed to assist engineers and makers in managing physical inventory stock. Always maintain regular database JSON backups via the Settings screen.
-
----
-
 ## 📜 License
+
 Licensed under the terms of the **MIT License**. See the full [LICENSE](LICENSE) file for details.
 
 ---

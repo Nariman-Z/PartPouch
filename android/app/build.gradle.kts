@@ -7,7 +7,8 @@ plugins {
 android {
     namespace = "com.narimanz.partpouch"
     compileSdk = flutter.compileSdkVersion
-    ndkVersion = flutter.ndkVersion
+    // ndkVersion is omitted to avoid unnecessary ~1.2GB NDK downloads in CI/CD since the app has no native C/C++ code
+    // ndkVersion = flutter.ndkVersion
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17

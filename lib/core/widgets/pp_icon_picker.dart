@@ -537,6 +537,21 @@ class PpIconPicker {
     ),
   ];
 
+  static final Map<int, IconData> _iconMap = {
+    for (final choice in allIcons) choice.icon.codePoint: choice.icon,
+    for (final icon in defaultQuickIcons) icon.codePoint: icon,
+    Icons.build_outlined.codePoint: Icons.build_outlined,
+  };
+
+  /// Resolves an [IconData] from a persisted [codePoint].
+  ///
+  /// Uses a constant lookup table to ensure all resolved icons are compile-time constants,
+  /// preserving full Flutter icon font tree-shaking support without runtime non-const failures.
+  static IconData getIcon(int? codePoint, {IconData fallback = Icons.build_outlined}) {
+    if (codePoint == null) return fallback;
+    return _iconMap[codePoint] ?? fallback;
+  }
+
   /// Opens the Ambinet-styled modal bottom sheet for choosing an icon
   static void show({
     required BuildContext context,

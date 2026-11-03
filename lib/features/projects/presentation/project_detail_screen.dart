@@ -125,10 +125,7 @@ class ProjectDetailScreen extends ConsumerWidget {
                   final curCodePoint = await ref
                       .read(projectsRepositoryProvider)
                       .getProjectIcon(project.id);
-                  final currentIcon = curCodePoint != null
-                      // ignore: non_const_argument_for_const_parameter
-                      ? IconData(curCodePoint, fontFamily: 'MaterialIcons')
-                      : Icons.build_outlined;
+                  final currentIcon = PpIconPicker.getIcon(curCodePoint);
                   if (context.mounted) {
                     PpIconPicker.show(
                       context: context,
@@ -208,11 +205,8 @@ class ProjectDetailScreen extends ConsumerWidget {
                                               .watchProjectIcon(project.id),
                                           builder: (context, iconSnap) {
                                             final iconCodePoint = iconSnap.data;
-                                            final iconData = iconCodePoint != null
-                                                // ignore: non_const_argument_for_const_parameter
-                                                ? IconData(iconCodePoint,
-                                                    fontFamily: 'MaterialIcons')
-                                                : Icons.build_outlined;
+                                            final iconData =
+                                                PpIconPicker.getIcon(iconCodePoint);
 
                                             return Tooltip(
                                               message: theme.translate('change_icon'),

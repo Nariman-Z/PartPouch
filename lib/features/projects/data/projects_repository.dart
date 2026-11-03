@@ -1,10 +1,11 @@
 import 'package:drift/drift.dart' hide Component;
-import 'package:flutter/material.dart' show IconData, Icons;
+import 'package:flutter/material.dart' show IconData;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
 import '../../../core/database/database.dart';
 import '../../../core/database/database_provider.dart';
 import '../../../core/errors/exceptions.dart';
+import '../../../core/widgets/pp_icon_picker.dart';
 
 class ProjectWithBomSummary {
   final Project project;
@@ -24,10 +25,7 @@ class ProjectWithBomSummary {
   bool get isFullyStocked =>
       totalBomItems > 0 && completedBomItems >= totalBomItems;
 
-  IconData get iconData => iconCodePoint != null
-      // ignore: non_const_argument_for_const_parameter
-      ? IconData(iconCodePoint!, fontFamily: 'MaterialIcons')
-      : Icons.build_outlined;
+  IconData get iconData => PpIconPicker.getIcon(iconCodePoint);
 }
 
 class ProjectBomItemDetail {

@@ -2,7 +2,7 @@
 <img src="https://user-images.githubusercontent.com/73097560/115834477-dbab4500-a447-11eb-908a-139a6edaec5c.gif">
 
 <!-- Dynamic Header -->
-<img height=350 alt="Repo Banner - PartPouch" src="https://capsule-render.vercel.app/api?type=waving&color=0:1E293B,100:0F172A&height=300&section=header&text=📦PartPouch&fontSize=50&fontColor=ffffff&animation=fadeIn&fontAlignY=38&desc=Modern%20Electronic%20Component%20%20Inventory%20Management%20Ecosystem&descAlignY=60&descAlign=50"></img>
+<img height=350 alt="Repo Banner - PartPouch" src="https://capsule-render.vercel.app/api?type=waving&color=0:FF7B42,100:D94812&height=300&section=header&text=📦PartPouch&fontSize=50&fontColor=ffffff&animation=fadeIn&fontAlignY=38&desc=Modern%20Electronic%20Component%20Inventory%20Management%20Ecosystem&descAlignY=60&descAlign=50"></img>
 
 <!--Title-->
 <p align="center">
